@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CGM_FM M0 里程碑工作报告</title>
+<style>
+  :root {
+    --fg: #1f2328; --fg-muted: #57606a; --border: #d0d7de;
+    --accent: #0969da; --ok: #1a7f37; --warn: #9a6700; --bg: #ffffff; --bg-soft: #f6f8fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", -apple-system, sans-serif;
+    color: var(--fg); background: var(--bg); margin: 0; line-height: 1.65;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 64px; }
+  h1 { font-size: 26px; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
+  h2 { font-size: 19px; margin-top: 40px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  h3 { font-size: 16px; margin-top: 24px; }
+  .meta { color: var(--fg-muted); font-size: 14px; margin-top: 8px; }
+  .meta span { margin-right: 18px; }
+  code, pre {
+    font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px;
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 4px;
+  }
+  code { padding: 1px 5px; }
+  pre { padding: 12px 14px; overflow-x: auto; line-height: 1.5; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--bg-soft); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .tag {
+    display: inline-block; font-size: 12px; border: 1px solid var(--border); border-radius: 999px;
+    padding: 0 10px; margin-right: 6px; color: var(--fg-muted); background: var(--bg-soft);
+  }
+  ul { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .fix { border-left: 4px solid var(--accent); background: var(--bg-soft); padding: 10px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+  .fix h3 { margin-top: 0; }
+  .footnote { color: var(--fg-muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>CGM_FM 项目 M0 里程碑工作报告</h1>
+<div class="meta">
+  <span>里程碑：M0 环境与官方基线</span>
+  <span>状态：<span class="ok">已完成</span>（2026-08-17）</span>
+  <span>工作目录：<code>C:\Coding\Work\CGM_FM\code\CGM-JEPA</code></span>
+  <span>依据：<code>CGM_FM\STRATEGY.md</code> §5 M0</span>
+</div>
+
+<h2>一、任务概述</h2>
+<p>按 <code>STRATEGY.md</code> 从 M0 开始执行：在宿主仓库 CGM-JEPA 上搭建 uv 管理的 Python 3.10 环境（CPU-only），下载官方三资产（预训练权重 / 下游标注数据 / 预训练语料），修复官方评估管线的阻断问题，跑通全部 6 格官方评估（3 种评测设置 × 2 个代谢终点），并对照论文验收。产出为可复现的官方基线环境与评估数字，作为后续 M2（框架改造）与 M4（三轨评估）的对照锚点。</p>
+
+<h2>二、完成清单</h2>
+<table>
+  <tr><th style="width:220px">事项</th><th>结果</th></tr>
+  <tr><td>Python 环境（uv）</td><td class="ok">完成</td></tr>
+  <tr><td>torch CPU + requirements 安装</td><td class="ok">完成（依赖硬 pin 全部保持）</td></tr>
+  <tr><td>HF 三资产下载</td><td class="ok">完成（Output/ 与 Dataset_Open/ 就位）</td></tr>
+  <tr><td>官方 eval 全量 6 格</td><td class="ok">完成（6/6 格 ok）</td></tr>
+  <tr><td>验收对照（论文口径）</td><td class="ok">达成（详见第五节）</td></tr>
+  <tr><td>STRATEGY.md 状态更新</td><td class="ok">完成（M0 小节附复现记录）</td></tr>
+</table>
+
+<h2>三、环境与资产</h2>
+<h3>3.1 环境</h3>
+<table>
+  <tr><th>组件</th><th>版本/说明</th></tr>
+  <tr><td>Python</td><td>3.10.20（uv 安装，独立 .venv）</td></tr>
+  <tr><td>torch / torchvision / torchaudio</td><td>2.6.0 / 0.21.0 / 2.6.0+cpu（CPU-only，符合本机无 GPU 约束）</td></tr>
+  <tr><td>transformers / huggingface_hub</td><td>4.33.3 / 0.24.0（momentfm / mantis 硬 pin，未动）</td></tr>
+  <tr><td>numpy / scikit-learn 等</td><td>1.25.2 / 1.7.2（按 requirements.txt 解析）</td></tr>
+</table>
+<p class="footnote">注：初次装的最新 torch 2.13 超出 requirements 的 <code>torch&lt;2.7</code> 上限，由 requirements 统一降级到 2.6.0；torchaudio 需从 cpu 源显式安装 2.6.0 与 torch 配对，否则 DLL 加载失败。</p>
+
+<h3>3.2 资产</h3>
+<table>
+  <tr><th>资产</th><th>来源（Hugging Face）</th><th>落盘位置</th></tr>
+  <tr><td>预训练权重</td><td>CRUISEResearchGroup/CGM-JEPA</td><td><code>Output/</code>（cgm_jepa、x_cgm_jepa、baselines/gluformer.pt、baselines/ts2vec.pkl）</td></tr>
+  <tr><td>下游标注数据</td><td>CRUISEResearchGroup/CGM-JEPA-Downstream</td><td><code>Dataset_Open/</code>（train/validation_split.json + parquet）</td></tr>
+  <tr><td>预训练语料</td><td>CRUISEResearchGroup/CGM-JEPA-Pretraining</td><td><code>Dataset_Open/cgm_initial_cohort.csv</code></td></tr>
+  <tr><td>Mantis / MOMENT 权重</td><td>paris-noah/Mantis-8M；AutonLab/MOMENT-1-small/large</td><td>HF 用户缓存（eval 前预下载，离线运行）</td></tr>
+</table>
+
+<h2>四、修复的阻断问题（共 5 项）</h2>
+
+<div class="fix">
+<h3>1. TS2Vec 子模块钉死 commit 已从上游消失</h3>
+<p><code>models/ts2vec</code> 子模块指向的 commit <code>5cde9ce</code> 在上游仓库已不可拉取（git 报 "not our ref"）。改为克隆上游 HEAD（<code>b0088e1</code>，2023-06 最终版），并将 <code>ts2vec.py</code> 顶部的绝对导入（<code>from models import ...</code> 等 3 行）改为相对导入，避免与宿主仓库自身的 <code>models/</code> 包冲突。改后 checkpoint <code>Output/baselines/ts2vec.pkl</code> 加载验证通过。</p>
+</div>
+
+<div class="fix">
+<h3>2. GluFormer 评估崩溃：词表不匹配导致嵌入索引越界</h3>
+<p><code>TokenDataTransformer</code> 硬编码 280 个血糖分箱，而发布权重（v5）的 vocab_size 为 278，home CGM 均值序列分箱后出现 token=279 越界（<code>IndexError: index out of range</code>）。修复：num_bins 参数化并贯通三层 —— <code>data_loaders/data_transformer.py</code>（从 config 读取 num_bins，缺省仍 280）、<code>data_loaders/base_loader/base_loader.py</code>（update_transformer 透传）、<code>config/model_configs.py</code>（GluFormer 探针注入 <code>num_bins=vocab_size</code>）。与 <code>eval/class_reg.py</code> 中按 encoder 自适应词表的既有逻辑口径一致。</p>
+</div>
+
+<div class="fix">
+<h3>3. Mantis / MOMENT 在线拉取权重网络抖动</h3>
+<p>评估过程中在线 <code>from_pretrained</code> 频繁超时/SSL 中断。改为评估前用 <code>huggingface-cli download</code>（带重试）预下载三个模型到 HF 缓存，随后以 <code>HF_HUB_OFFLINE=1</code> + <code>TRANSFORMERS_OFFLINE=1</code> 离线运行全量评估，不再受网络影响。</p>
+</div>
+
+<div class="fix">
+<h3>4. wandb 未登录导致每格评估以 exit 1 结束</h3>
+<p><code>config/config_downstream.py</code> 默认 <code>enable_wandb: True</code>，每格评估在结尾 <code>wandb.init</code> 处因无 API key 崩溃（指标已全部算完但进程报失败）。按 STRATEGY.md「eval 不需要 wandb」将其改为 <code>False</code>。</p>
+</div>
+
+<div class="fix">
+<h3>5. 脚本方式运行时找不到项目根包</h3>
+<p><code>python scripts/run_all_eval.py</code> 以文件方式启动时项目根不在 <code>sys.path</code>，报 <code>No module named 'config'</code>。运行时注入 <code>$env:PYTHONPATH='.'</code> 解决（未改代码）。</p>
+</div>
+
+<h2>五、评估结果与验收</h2>
+<p>协议：3 种评测设置 × 2 个代谢终点（ir = 胰岛素抵抗，beta = β 细胞功能障碍），每格 20 次迭代 × 2 折分层 CV（40 个配对观测）。完整日志：<code>logs/eval_all_20260817_205031.log</code>；逐受试者预测：<code>logs/preds/*.csv</code>。</p>
+
+<h3>5.1 AUROC 汇总（各格前 2 名）</h3>
+<table>
+  <tr><th>评测设置</th><th>终点</th><th>第 1 名</th><th>第 2 名</th></tr>
+  <tr><td rowspan="2">in_domain_venous<br><span class="footnote">初始队列 → 验证队列，静脉血（队列泛化）</span></td><td>ir</td><td>GluFormer 0.8261</td><td><b>CGM-JEPA 0.8043</b></td></tr>
+  <tr><td>beta</td><td><b>X-CGM-JEPA 0.8629</b></td><td>CGM-JEPA 0.8337</td></tr>
+  <tr><td rowspan="2">venous_to_home_cgm<br><span class="footnote">静脉血 → 居家 CGM（模态迁移）</span></td><td>ir</td><td><b>X-CGM-JEPA 0.8688</b></td><td>CGM-JEPA 0.8642</td></tr>
+  <tr><td>beta</td><td><b>X-CGM-JEPA 0.9494</b></td><td>CGM-JEPA 0.9464</td></tr>
+  <tr><td rowspan="2">home_cgm_in_domain<br><span class="footnote">居家 CGM 域内</span></td><td>ir</td><td><b>X-CGM-JEPA 0.8600</b></td><td>Untrained-JEPA-Glu 0.8567</td></tr>
+  <tr><td>beta</td><td><b>X-CGM-JEPA 0.9464</b></td><td>CGM-JEPA 0.9319</td></tr>
+</table>
+<p class="footnote">每格完整榜单含 10 个模型：CGM-JEPA、X-CGM-JEPA、GluFormer、TS2Vec、MOMENT-Small/Large、Mantis、两个未训练 JEPA 对照、PCA+L2 逻辑回归基线。</p>
+
+<h3>5.2 验收结论</h3>
+<ul>
+  <li>论文摘要主张「X-CGM-JEPA 在全部三种评测设置、两个终点的 AUROC 排名第一或第二，且无基线能做到」——本次复现<b>一致成立</b>：X-CGM-JEPA 六格全部进入前二（五格第一、一格第二）。</li>
+  <li>六格配对 Wilcoxon 检验方向与论文一致（JEPA 系对 MOMENT/Mantis/TS2Vec 等基线显著占优，p&lt;0.05）。</li>
+  <li>注意：<code>logs/outputmodel/*/results.json</code> 每格运行会覆盖（现仅存最后 beta 格），全量数字以 log 文件为准。</li>
+</ul>
+
+<h2>六、运行方式（复现命令）</h2>
+<pre>cd C:\Coding\Work\CGM_FM\code\CGM-JEPA
+$env:PYTHONPATH = '.'
+$env:HF_HUB_OFFLINE = '1'        # 权重已在本地缓存
+$env:TRANSFORMERS_OFFLINE = '1'
+uv run python scripts/run_all_eval.py</pre>
+<p class="footnote">若 Mantis/MOMENT 缓存缺失，先去掉离线变量在线跑一次（或单独 huggingface-cli download 三模型）。</p>
+
+<h2>七、代码改动清单</h2>
+<table>
+  <tr><th>文件</th><th>改动</th></tr>
+  <tr><td><code>models/ts2vec/ts2vec.py</code></td><td>3 行绝对导入改相对导入（子模块换 HEAD 后的适配）</td></tr>
+  <tr><td><code>data_loaders/data_transformer.py</code></td><td>TokenDataTransformer 的 num_bins 从 config 读取</td></tr>
+  <tr><td><code>data_loaders/base_loader/base_loader.py</code></td><td>update_transformer 透传 num_bins</td></tr>
+  <tr><td><code>config/model_configs.py</code></td><td>GluFormer 探针注入 num_bins=词表大小</td></tr>
+  <tr><td><code>config/config_downstream.py</code></td><td>enable_wandb 默认改 False</td></tr>
+  <tr><td><code>CGM_FM\STRATEGY.md</code></td><td>M0 标记完成，附复现记录（环境差异、5 个坑与修法、验收数字）</td></tr>
+</table>
+
+<h2>八、下一步</h2>
+<ul>
+  <li><b>M1 数据管线</b>：克隆 Glucose-ML 聚合项目（auto-download 8 个新开放数据集 + auto-harmonize），自写 5 个清洗器（Shanghai xlsx / Colas 无日期 / Hall TSV / BIG IDEAs EGV 过滤 / CGMacros 去插值），构建标签表 JSON（含单位换算）与 subject-disjoint 语料划分；并行发起受控数据申请（AI-READI、T1DEXI、OhioT1DM、DiaTrend）。</li>
+  <li><b>M0/M1 期间吞吐 smoke test</b>：跑 100 step 实测 CPU it/s，为 M3 因子矩阵定规模（方案 A 缩减 or 方案 B 云 GPU）。</li>
+</ul>
+
+<p class="meta" style="margin-top:48px">报告生成：2026-08-18 · 本文件由 M0 工作总结生成，随 git 提交入库（<code>CGM_FM\M0_report.html</code>）</p>
+
+</div>
+</body>
+</html>
