@@ -1,0 +1,4 @@
+dataset,n_subjects,n_rows,median_days,median_interval_min,dropped_value_or_ts,dropped_dup,colas_non5min_gaps,deinterp_removed_frac
+colas_2019,208,114253,1.996539351851852,5.0,0,0,0,
+park_2025,98,23520,0.13541666666666666,5.0,0,0,0,
+cgm_jepa_pre,22,276747,192.84859375000002,5.0,10,0,0,

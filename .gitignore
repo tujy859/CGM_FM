@@ -6,3 +6,7 @@ code/
 
 # 论文 PDF 与全文提取（48MB，如需入库再移除本行）
 papers/
+
+# M1 派生语料大文件（~96MB，可用 scripts/m1_*.py 从 datasets/ 再生；summary.csv 统计入库）
+data/unified/*.csv
+!data/unified/summary.csv
