@@ -7,7 +7,7 @@
 ## 1. GlucoFM 论文分析
 
 **论文**: GlucoFM: A Dual-Stream Foundation Model for Continuous Glucose Monitoring
-**arXiv**: https://arxiv.org/abs/2605.30865（2026-05-29，Google Research + UNSW，通讯 Zechen Li / Yuzhe Yang / Ahmed A. Metwally）
+**arXiv**: https://arxiv.org/abs/2605.30865 （2026-05-29，Google Research + UNSW，通讯 Zechen Li / Yuzhe Yang / Ahmed A. Metwally）
 **本地**: `papers/GlucoFM_2605.30865.pdf`
 
 ### 做什么
