@@ -156,6 +156,7 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
 - **Hall glucotype 自算延后至 M4 评估前**（Hall 2018 方法：变异性指标聚类三分类）；Park_2025 代谢表型标签不在发布 CSV 中（如需从论文补充材料补）
 - 受控数据申请（AI-READI/T1DEXI/OhioT1DM/DiaTrend）本轮未发起，待 M3 结果明朗后再决定是否扩充
 - **网络教训（后续 session 注意）**：python requests 默认走 Windows 系统代理（本机 Clash 127.0.0.1:7897 常开），大文件下载务必用 curl.exe（只认环境变量、直连）并显式 `-A` UA；Mendeley/Zenodo 对 requests UA 返回 403 时 curl 可绕过；代理额度有限（本轮误耗约 192MB）
+- **2026-08-22 补记：CGM-JEPA 已 vendor 入库**——`code/CGM-JEPA/` 连同 M0 修复、ts2vec 相对导入修复、HF 资产（Output/ + Dataset_Open/，22MB）以普通文件形式进入本仓，不再依赖上游克隆与 huggingface-cli 下载。上游 git 关联已断（原 partial clone 缺历史对象、ts2vec 上游 gitlink 断链，均随 vendoring 消解；历史备份在本地 `.backup/*.bundle`）。新机器 `git clone --recurse-submodules Work` 后仅需重建 `.venv` 即可跑 eval
 
 ### M2：框架改造（1 周，基于 CGM-JEPA 代码）
 改动 6 个文件（精确落点见 README.md §复现落点）：`data_loaders/data_transformer.py`（双流+掩码）、`data_loaders/data_class.py`（mask [0.5,0.6] 采样+增强）、`utils/embed.py`（双通道+昼夜编码）、`models/encoder.py`（TD 头）、`pretrain/pretrain_cgm_jepa.py`（SmoothL1+密度加权）、`config/model_configs.py`（注册制）。目标：`--objective {mcr,recon,causal} --arch {plain,dual,cnn}` 可配置。
@@ -197,5 +198,5 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
 
 1. 工作区根已有 `AGENTS.md`（新 session 自动加载）：项目背景、硬约束（CPU-only / uv / 依赖 pin / 纯文本公式）、执行规范
 2. 读本文件 + `README.md`（15 分钟），从 M0 开始执行（§5 有完整命令）
-3. 目录约定：`papers/` 论文与全文提取；`code/` 四仓库（CGM-JEPA 是宿主）；`datasets/` 原始+解压数据；`data/`（待建）统一格式产物；`runs/`（待建）训练输出
+3. 目录约定：`papers/` 论文与全文提取（入库）；`code/CGM-JEPA/` 宿主仓已 vendor 入库（含修复与 HF 资产，其余三参考仓不入库）；`datasets/` 原始+解压数据（不入库）；`data/` 统一格式产物（入库）；`runs/`（待建）训练输出
 4. 所有公式用纯文本写（CLI 不渲染 LaTeX）

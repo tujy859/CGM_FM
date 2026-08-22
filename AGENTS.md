@@ -8,9 +8,11 @@
 2. `README.md`（同目录） — 调研结论：论文分析、四仓库用法、数据集清洗坑、复现落点（按需查阅）
 
 ## 目录约定
-- `papers\` — 论文 PDF 与全文提取（.txt/.md）
-- `code\` — 四个克隆仓库；**宿主仓库是 CGM-JEPA**（在其上改造，其余仅作参考）
-- `datasets\` — 原始与解压数据；`data\`（待建）— 统一格式产物；`runs\`（待建）— 训练输出
+- `papers\` — 论文 PDF 与全文提取（.txt/.md），已入库
+- `code\CGM-JEPA\` — **宿主仓库，已 vendor 为普通文件入库**（含 M0 修复、ts2vec 相对导入修复、HF 资产 `Output\`+`Dataset_Open\` 22MB；无嵌套 .git，直接改文件提交即可）。其余三仓（CGMformer/cgmlsm/GluFormer）为本地参考克隆，不入库
+- `code\CGM-JEPA\models\ts2vec\` — 原 ts2vec 子模块，同样已 vendor（含修复）；上游断链的 `5cde9ce` gitlink 问题随之消失
+- `datasets\` — 原始与解压数据（不入库）；`data\` — 统一格式产物（已入库）；`runs\`（待建）— 训练输出
+- `.backup\` — vendoring 前的 git 历史 bundle（仅本机，gitignore）
 
 ## 硬约束（违反会导致返工）
 - **本机无 GPU，只有 CPU 和微软 NPU**：
