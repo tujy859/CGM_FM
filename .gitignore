@@ -1,7 +1,11 @@
 # 原始数据与解压产物（698MB，不入库）
 datasets/
 
-# 上游代码克隆（各自独立 git 仓库，勿作嵌入提交）
-code/
+# 上游参考仓克隆（独立 git 仓库，不入库）；CGM-JEPA 宿主仓已 vendor 为普通文件（含 M0 修复与 HF 资产）
+code/*
+!code/CGM-JEPA/
+
+# 本地历史备份 bundle（vendoring 前的 git 历史，仅本机保留）
+.backup/
 
 # M1 派生语料大文件（~96MB，可用 scripts/m1_*.py 从 datasets/ 再生）；2026-08-22 起入库，仅 datasets/ 原始数据不入
