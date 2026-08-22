@@ -4,6 +4,4 @@ datasets/
 # 上游代码克隆（各自独立 git 仓库，勿作嵌入提交）
 code/
 
-# M1 派生语料大文件（~96MB，可用 scripts/m1_*.py 从 datasets/ 再生；summary.csv 统计入库）
-data/unified/*.csv
-!data/unified/summary.csv
+# M1 派生语料大文件（~96MB，可用 scripts/m1_*.py 从 datasets/ 再生）；2026-08-22 起入库，仅 datasets/ 原始数据不入

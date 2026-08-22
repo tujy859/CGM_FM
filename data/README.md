@@ -7,8 +7,8 @@
 ```
 data/
 ├── unified/            # 各数据集三列 CSV（subject,timestamp,glucose_value mg/dL）
-│   ├── *.csv           # ~96MB 派生语料，不入 git（可用脚本再生），命名见下表
-│   └── summary.csv     # 每数据集统计（人数/行数/中位时长/中位采样间隔/清洗计数），入库
+│   ├── *.csv           # 派生语料（2026-08-22 起入库；亦可用脚本从 datasets/ 再生），命名见下表
+│   └── summary.csv     # 每数据集统计（人数/行数/中位时长/中位采样间隔/清洗计数）
 ├── labels/labels.json  # 157 人标签（hba1c_pct/homa_ir/血脂/BMI + 5 任务 0/1），入库
 ├── splits.json         # subject-disjoint 划分（seed=42），入库
 └── README.md
