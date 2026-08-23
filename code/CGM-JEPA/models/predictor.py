@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from utils.embed import PositionalEmbedding, TimeFeatureEmbedding
+from utils.embed import PositionalEmbedding, TimeFeatureEmbedding, CircadianEmbedding
 from utils.modules import *
 from utils.mask_utils import apply_mask
 
@@ -38,6 +38,7 @@ class Predictor(nn.Module):
         # Added representation
         self.pos_embed = PositionalEmbedding(predictor_embed_dim)
         self.time_embed = TimeFeatureEmbedding(predictor_embed_dim, time_inp_dim)
+        self.tod_embed = CircadianEmbedding(predictor_embed_dim)
 
         # Mask tokens
         self.mask_token = nn.Parameter(torch.zeros(1, 1, predictor_embed_dim))
@@ -72,8 +73,9 @@ class Predictor(nn.Module):
         # x_mark: (B, L_full, time_inp_dim) timestamps for full sequence
         # masks / non_masks: boolean or 0/1 masks over L_full (shape: B x L_full)
 
-        B, L_full, patch_size, _time_inp = x_mark.size()
-        _, L_ctx, _ = encoded_vals.size()               
+        B = encoded_vals.size(0)
+        L_full = x_mark.size(1)
+        _, L_ctx, _ = encoded_vals.size()
 
         # map the output of the encoder to the predictor's dimension
         x = self.predictor_embed(encoded_vals)                              # (B, L_ctx, Dp)
@@ -81,7 +83,10 @@ class Predictor(nn.Module):
         # build full-seq pos+time encodings
         pos_full = self.pos_embed(L_full).repeat(B, 1, 1)                   # (B, L_full, Dp)
 
-        if x_mark is not None and not torch.allclose(x_mark, torch.zeros_like(x_mark)):
+        if x_mark.dim() == 3:
+            # circular time-of-day phase (B, N, 2)
+            pos_tim_full = pos_full + self.tod_embed(x_mark)
+        elif x_mark is not None and not torch.allclose(x_mark, torch.zeros_like(x_mark)):
             tim_full = self.time_embed(x_mark)                               # (B, L_full, Dp)
             pos_tim_full = pos_full + tim_full
         else:

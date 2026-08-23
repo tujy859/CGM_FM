@@ -54,12 +54,18 @@ class MultiHeadAttention(nn.Module):
         self.proj_drop_prob = proj_drop
         self.proj_drop = nn.Dropout(proj_drop)
 
-    def forward(self, x, mask=None):
+    def forward(self, x, causal=False, mask=None):
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
         attn = (q @ k.transpose(-2, -1)) * self.scale
+        if causal:
+            # additive upper-triangular mask: token i only attends to j <= i
+            causal_mask = torch.triu(
+                torch.ones(N, N, dtype=torch.bool, device=x.device), diagonal=1
+            )
+            attn = attn.masked_fill(causal_mask.view(1, 1, N, N), float("-inf"))
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
         x = (attn @ v) 
@@ -106,8 +112,8 @@ class Block(nn.Module):
             drop=drop
         )
 
-    def forward(self, x, return_attention=False, mask=None):
-        y, attn = self.attn(self.norm1(x), mask=mask)
+    def forward(self, x, return_attention=False, causal=False, mask=None):
+        y, attn = self.attn(self.norm1(x), causal=causal, mask=mask)
         if return_attention:
             return attn
         x = x + y

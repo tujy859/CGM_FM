@@ -158,11 +158,29 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
 - **网络教训（后续 session 注意）**：python requests 默认走 Windows 系统代理（本机 Clash 127.0.0.1:7897 常开），大文件下载务必用 curl.exe（只认环境变量、直连）并显式 `-A` UA；Mendeley/Zenodo 对 requests UA 返回 403 时 curl 可绕过；代理额度有限（本轮误耗约 192MB）
 - **2026-08-22 补记：CGM-JEPA 已 vendor 入库**——`code/CGM-JEPA/` 连同 M0 修复、ts2vec 相对导入修复、HF 资产（Output/ + Dataset_Open/，22MB）以普通文件形式进入本仓，不再依赖上游克隆与 huggingface-cli 下载。上游 git 关联已断（原 partial clone 缺历史对象、ts2vec 上游 gitlink 断链，均随 vendoring 消解；历史备份在本地 `.backup/*.bundle`）。新机器 `git clone --recurse-submodules Work` 后仅需重建 `.venv` 即可跑 eval
 
-### M2：框架改造（1 周，基于 CGM-JEPA 代码）
+### M2：框架改造（1 周，基于 CGM-JEPA 代码）✅ 已完成（2026-08-23，详见下方执行记录）
 改动 6 个文件（精确落点见 README.md §复现落点）：`data_loaders/data_transformer.py`（双流+掩码）、`data_loaders/data_class.py`（mask [0.5,0.6] 采样+增强）、`utils/embed.py`（双通道+昼夜编码）、`models/encoder.py`（TD 头）、`pretrain/pretrain_cgm_jepa.py`（SmoothL1+密度加权）、`config/model_configs.py`（注册制）。目标：`--objective {mcr,recon,causal} --arch {plain,dual,cnn}` 可配置。
 产出：可配置训练框架 + 单元测试（双流滤波器频响、掩码贯通、EMA 更新）。
 
+**M2 执行记录**（2026-08-23，Linux 新机重建后实施）：
+- 环境重建：`git pull` 得到 vendor 入库的 CGM-JEPA（commit 3ee3bd5/73e9173）；`uv venv --python 3.10` + CPU 源 torch 2.6.0/torchaudio 2.6.0/torchvision 0.21.0（配对）+ requirements.txt（transformers 4.33.3 / hf_hub 0.24.0 pin 保持）。**坑：Linux 上直接 `uv pip install -r requirements.txt` 会从 PyPI 拉 CUDA 版 torch（数 GB nvidia 依赖）且超 requirements 的 <2.7 上限，必须先从 cpu 源装齐 torch 三件套再装 requirements**
+- 实际改动 8 个文件（6 个计划内 + 2 个必要小改）：
+  1. `utils/modules.py`：MHA/Block 加 `causal` 参数（上三角 -inf 掩码，向后兼容）
+  2. `utils/embed.py`：新增 `CircadianEmbedding`（sin/cos(2πi/288) → Linear + sigmoid 门控融合）与 `DualValueEmbedding`（state/event 双 Conv1d patch 化 + Linear(2D→D) 投影融合）；DataEmbedding 分支 3D tod（昼夜）/4D legacy 时间特征
+  3. `models/encoder.py`：`CausalGaussianFilter`（σ 经 sigmoid 重参数化至 [2,12] 网格步，核长 3σ_max+1=37 因果抽头，梯度直通 σ）、`TDHead`（S_next = S + g(S,E,τ)，τ 为可学习位置嵌入，支持 (B,N,D) 与展平 (P,D) 两种输入）、`ConvBackbone`（A3：因果膨胀门控残差卷积，dilation 1/2/4，无注意力）；Encoder 加 `arch/causal/use_circadian` 参数，dual 在 patch 化前对整段序列做滤波分解（state+event=x 精确重构），post-hoc state/event 投影供 TD 头
+  4. `models/predictor.py`：x_mark 支持 3D 昼夜相位（内部加 CircadianEmbedding）
+  5. `data_loaders/data_transformer.py`：`MaskedPatchDataTransformer`（values+obs_mask 同步 patch 化、逐 patch 观测密度）
+  6. `data_loaders/data_class.py`：`FactorPretrainLoader`（读 data/unified/*.csv + splits.json pretrain 472 段；5min 网格对齐 + 观测掩码不插值；>1h 缺口切段、≤1h 段内 mask=0；24h 窗 min_obs_frac=0.5；CGMAugmenter 四增强：基线漂移 p=0.25（3–15mg/dL 慢正弦）、压缩骤降 p=0.10（30min–2h 原始值域乘 0.6–0.85）、结构抽稀 p=0.40（5→15min）、断连块 p=0.05（1–3h）；归一化统计存入 dataset.stats）
+  7. `config/model_configs.py`：注册制 `FACTOR_MODEL_REGISTRY` + `build_factor_encoder(objective, arch)`（单一事实源：预训练入口与评估回载共用）、`save_factor_run/load_factor_run`（encoder.pt + factor_config.json，回载含 data_mean/std）
+  8. `pretrain/pretrain_cgm_jepa.py`：整体重写为 argparse 入口，`--objective {mcr,recon,causal} --arch {plain,dual,cnn}`；三目标：mcr=JEPA 潜空间预测（EMA 0.997→~0.9994，ipe 1.25）+ TD 头（相邻可见对 (i,i+1)，目标取 EMA state token）；recon=predictor+Linear 解码器重建被遮 patch 原始值；causal=因果注意力 + Linear 头 next-patch 回归。全部 SmoothL1×观测密度加权（patch 级 w=密度，格级 w=obs mask）；σ 参数独立分组 lr 1e-3 无 wd；CPU 优化（set_num_threads、EMA no_grad、DataLoader workers）；wandb 默认关
+- 新增 `tests/test_m2.py` 13 项全过：滤波器频响（24h 波通过/30min 波 σ=2 衰减 σ=12 抑制/event 流恢复快波）、因果性（扰动未来不影响过去）、σ 梯度直通与范围、掩码贯通（patch 密度=观测占比、增强只减不增观测、>1h 切段/≤1h 保留）、网格对齐、昼夜编码周期性、EMA 动量调度、TD 残差形式、3×3 组合前向反向烟雾、checkpoint 保存回载零差异、参数预算（dual encoder 0.4–1.0M 实测达标）
+- 真实语料烟雾：mcr/dual 15 epoch 全量收敛 0.694→0.098（σ 6.00→6.12 自适应），recon/plain 与 causal/cnn 亦跑通；官方 Output/ checkpoint 回载不受影响（eval 兼容性保持）
+- **设计偏差（可追溯）**：①mask ratio 逐批次采样 U[0.5,0.6]（逐样本采样会导致 collate 尺寸不齐；样本内排列仍逐样本独立，B=128 下统计等价）②dual 的 state/event token 为骨干输出的事后投影（GlucoFM 细节未公开，滤波分解在输入侧忠实实现）③causal 目标用因果注意力+next-patch 回归头（连续值不离散化，消除 tokenize 混淆变量）
+- **吞吐实测（M3 关键输入）**：9 线程 CPU、B=128、最重的 mcr/dual 组合 0.062s/step、2058 窗/s；全量非重叠语料 4625 窗（加载 5.4s，观测密度均值 0.71）→ 36 step/epoch，60 epoch ≈ 2.5 分钟/组。**结论：CPU 方案 A 预算可大幅上调——3 seed × 9 组全矩阵 + 消融（约 32 次训练）预计数小时内可完成，无需云 GPU**；如需更大有效语料可用 --stride 48（约 2.7 万窗，~13min/组）
+
 ### M3：因子矩阵预训练（CPU 预算，两套方案）
+
+**2026-08-23 更新：M2 吞吐实测后，方案 A 预算大幅宽裕（0.062s/step，全矩阵 32 次训练预计数小时），默认执行 3 seed 全矩阵；窗口数不足时用 --stride 48 扩有效语料。**
 
 完整矩阵：3 目标 × 3 架构 × 3 seed + 5 项消融 ≈ 32 次预训练。
 

@@ -84,9 +84,49 @@ class TimeFeatureEmbedding(nn.Module):
         x_mark = x_mark.view(B, N, patch_size, -1).mean(dim=2)
         return x_mark
 
+class CircadianEmbedding(nn.Module):
+    '''
+        @brief: Circular time-of-day encoding sin/cos(2*pi*i/288) for the 288-step
+                daily grid, fused with a learnable sigmoid gate (GlucoFM style).
+        @input: tod: (B, N, 2) per-patch mean of (sin, cos) phase over the patch
+    '''
+    def __init__(self, dim: int):
+        super().__init__()
+        self.proj = nn.Linear(2, dim)
+        self.gate = nn.Parameter(torch.zeros(dim))  # sigmoid(0)=0.5 initial fusion
+
+    def forward(self, tod: torch.Tensor):
+        # tod: (B, N, 2) -> (B, N, D)
+        g = torch.sigmoid(self.gate)
+        return g * self.proj(tod.float())
+
+class DualValueEmbedding(nn.Module):
+    '''
+        @brief: Dual-stream (state/event) patch embedding. Each stream gets its own
+                Conv1d patchifier; streams are fused by projection (Linear(2D -> D)).
+        @input: x: (B, 2, N, L) with channel 0 = state (smoothed) and 1 = event (residual)
+    '''
+    def __init__(self, dim: int, patch_size: int, bias: bool = True):
+        super().__init__()
+        self.state_proj = nn.Conv1d(1, dim, kernel_size=patch_size, stride=patch_size, bias=bias)
+        self.event_proj = nn.Conv1d(1, dim, kernel_size=patch_size, stride=patch_size, bias=bias)
+        self.fuse = nn.Linear(2 * dim, dim)
+
+    def forward(self, x):
+        B, C, N, L = x.shape
+        assert C == 2, "DualValueEmbedding expects a 2-stream input (B, 2, N, L)"
+        s = self.state_proj(x[:, 0].reshape(B * N, 1, L))          # (B*N, D, 1)
+        e = self.event_proj(x[:, 1].reshape(B * N, 1, L))
+        s = s.squeeze(-1).view(B, N, -1)
+        e = e.squeeze(-1).view(B, N, -1)
+        return self.fuse(torch.cat([s, e], dim=-1))                # (B, N, D)
+
 class DataEmbedding(nn.Module):
     '''
-        @brief: Embed the input into num_patches with d dimension
+        @brief: Embed the input into num_patches with d dimension.
+                M2 extension: arch="dual" consumes pre-decomposed 2-stream patches
+                (B, 2, N, L); 3-dim x_mark (B, N, 2) is treated as circular
+                time-of-day phase and fused via CircadianEmbedding.
     '''
     def __init__(
         self,
@@ -94,23 +134,34 @@ class DataEmbedding(nn.Module):
         in_channels: int,
         patch_size: int,
         time_inp_dim: int,
-        dropout: float = 0.1
+        dropout: float = 0.1,
+        arch: str = "plain",
+        use_circadian: bool = True,
     ):
         super().__init__()
+        self.arch = arch
+        self.use_circadian = use_circadian
 
-        self.value_embedding = ValueEmbedding(dim, in_channels, patch_size)
+        if arch == "dual":
+            self.value_embedding = DualValueEmbedding(dim, patch_size)
+        else:
+            self.value_embedding = ValueEmbedding(dim, in_channels, patch_size)
         self.positional_embedding = PositionalEmbedding(dim)
         self.timefeature_embedding = TimeFeatureEmbedding(dim, time_inp_dim)
+        self.circadian_embedding = CircadianEmbedding(dim) if use_circadian else None
         self.dropout = nn.Dropout(p=dropout)
-    
+
     def forward(self, x: torch.Tensor, x_mark: torch.Tensor):
-        # x: (B, C, T), x_mark: (B, L, d_inp)
-        val = self.value_embedding(x)                   # (B, L, D)
-        pos = self.positional_embedding(val.size(1))    # (1, L, D)
+        # plain: x (B, N, L); dual: x (B, 2, N, L) pre-decomposed streams
+        # x_mark: (B, N, 2) circadian phase OR (B, N, L, d_inp) legacy Informer features
+        val = self.value_embedding(x)                   # (B, N, D)
+        pos = self.positional_embedding(val.size(1))    # (1, N, D)
         out = val + pos
 
-        if x_mark is not None and not torch.allclose(x_mark, torch.zeros_like(x_mark)):
-            tim = self.timefeature_embedding(x_mark)    # (B, L, D)
+        if x_mark is not None and x_mark.dim() == 3 and self.circadian_embedding is not None:
+            out = out + self.circadian_embedding(x_mark)        # (B, N, D)
+        elif x_mark is not None and x_mark.dim() == 4 and not torch.allclose(x_mark, torch.zeros_like(x_mark)):
+            tim = self.timefeature_embedding(x_mark)            # (B, N, D)
             out = out + tim
 
         return self.dropout(out)

@@ -3,6 +3,7 @@ import os
 import torch
 
 import torch.nn as nn
+import json
 
 from root import PROJECT_ROOT
 
@@ -14,10 +15,116 @@ from eval.baseline_utils.ridge_utils import AdaptiveCalibratedRidgeClassifier
 
 from .config_downstream import config
 
-from models.encoder import Encoder
+from models.encoder import Encoder, TDHead, ARCHS
 from models.gluformer.gluformer import GluFormer
 
 from utils.main_utils import load_device
+
+
+# ---------------------------------------------------------------------------
+# M2 factor-matrix registry (STRATEGY.md §2-3)
+# objectives: mcr (JEPA + TD head) | recon (masked reconstruction) | causal
+# archs:      plain (Transformer) | dual (GlucoFM dual-stream) | cnn (PatchTST-ish)
+# ---------------------------------------------------------------------------
+FACTOR_OBJECTIVES = ("mcr", "recon", "causal")
+FACTOR_ARCHS = ARCHS
+
+FACTOR_DEFAULTS = {
+    # shared encoder backbone (parameter budget ~0.6M, STRATEGY.md §2)
+    "patch_size": 12,
+    "encoder_embed_dim": 128,
+    "encoder_nhead": 4,
+    "encoder_num_layers": 3,
+    "encoder_mlp_ratio": 2.0,  # FFN 256 at D=128
+    "encoder_dropout": 0.0,
+    "use_circadian": True,
+    "sigma_init": 6.0,
+    "sigma_min": 2.0,
+    "sigma_max": 12.0,
+    # predictor (mcr/recon)
+    "predictor_embed": 64,
+    "predictor_nhead": 4,
+    "predictor_num_layers": 1,
+    # TD head (mcr)
+    "td_hidden_dim": 256,
+    # training defaults (STRATEGY.md §3)
+    "lr": 1e-4,
+    "wd": 1e-2,
+    "sigma_lr": 1e-3,
+    "batch_size": 128,
+    "num_epochs": 60,
+    "ema_momentum": 0.997,
+    "ipe_scale": 1.25,
+    "warmup_ratio": 0.15,
+    "clip_grad_max_norm": 1.0,
+    "mask_ratio_range": (0.5, 0.6),
+    "lambda_td": 1.0,
+    "window": 288,
+}
+
+FACTOR_MODEL_REGISTRY = {}
+
+
+def register_factor_model(objective, arch):
+    def deco(fn):
+        key = (objective, arch)
+        assert key not in FACTOR_MODEL_REGISTRY, f"duplicate registration {key}"
+        FACTOR_MODEL_REGISTRY[key] = fn
+        return fn
+    return deco
+
+
+def build_factor_encoder(objective, arch, dim_in=12, **overrides):
+    """Single source of truth for factor-matrix encoders. Used by the
+    pretraining entry and by checkpoint loading for evaluation."""
+    assert objective in FACTOR_OBJECTIVES, f"objective must be {FACTOR_OBJECTIVES}"
+    assert arch in FACTOR_ARCHS, f"arch must be {FACTOR_ARCHS}"
+    cfg = {**FACTOR_DEFAULTS, "dim_in": dim_in, **overrides}
+    encoder = Encoder(
+        dim_in=cfg["dim_in"],
+        kernel_size=cfg["patch_size"],
+        embed_dim=cfg["encoder_embed_dim"],
+        embed_bias=True,
+        nhead=cfg["encoder_nhead"],
+        num_layers=cfg["encoder_num_layers"],
+        mlp_ratio=cfg["encoder_mlp_ratio"],
+        jepa=(objective in ("mcr", "recon")),
+        causal=(objective == "causal"),
+        arch=arch,
+        use_circadian=cfg["use_circadian"],
+        sigma_init=cfg["sigma_init"],
+        sigma_min=cfg["sigma_min"],
+        sigma_max=cfg["sigma_max"],
+        drop_rate=cfg["encoder_dropout"],
+        time_inp_dim=5,
+    )
+    return encoder, cfg
+
+
+def build_factor_td_head(cfg):
+    return TDHead(cfg["encoder_embed_dim"], hidden_dim=cfg["td_hidden_dim"])
+
+
+def save_factor_run(encoder, cfg, run_dir):
+    """Save a factor-matrix run: encoder state + full config for exact rebuild."""
+    os.makedirs(run_dir, exist_ok=True)
+    torch.save(encoder.state_dict(), os.path.join(run_dir, "encoder.pt"))
+    with open(os.path.join(run_dir, "factor_config.json"), "w") as f:
+        json.dump(cfg, f, indent=2, default=str)
+
+
+def load_factor_run(run_dir, device="cpu", strict=True):
+    """Rebuild encoder from a factor run directory (registry-based)."""
+    with open(os.path.join(run_dir, "factor_config.json"), "r") as f:
+        cfg = json.load(f)
+    encoder, cfg = build_factor_encoder(
+        cfg["objective"], cfg["arch"], dim_in=cfg.get("dim_in", 12),
+        **{k: v for k, v in cfg.items()
+           if k in FACTOR_DEFAULTS and not isinstance(v, (list, tuple))}
+    )
+    state = torch.load(os.path.join(run_dir, "encoder.pt"), map_location=device)
+    encoder.load_state_dict(state, strict=strict)
+    return encoder.to(device), cfg
 
 
 # Local layout under Output/ as published on Hugging Face

@@ -12,6 +12,55 @@ class DataTransformer:
     def encode(self, encoder, x):
         raise NotImplementedError
 
+class MaskedPatchDataTransformer(DataTransformer):
+    '''
+        @brief: M2 patchifier that carries the observation mask alongside the
+                values (mask贯通) and exposes per-patch observation density.
+                Missing cells must be encoded as 0.0 with mask=0 (normalized space).
+    '''
+    def __init__(self, config):
+        super().__init__(config)
+        self.patch_size = config.get("patch_size", 12)
+        self.mean = config.get("mean", None)
+        self.std = config.get("std", None)
+
+    def set_stats(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    @staticmethod
+    def patchify(x, patch_size):
+        # x: (T,) -> (N, L)
+        num_patches = len(x) // patch_size
+        return x[: num_patches * patch_size].reshape(num_patches, patch_size)
+
+    def transform(self, x, obs_mask=None):
+        # x: (T,) values; obs_mask: (T,) {0,1}; returns dict of patches + density
+        if self.mean is not None and self.std is not None:
+            m = obs_mask if obs_mask is not None else np.ones_like(x, dtype=bool)
+            x = x.copy()
+            x[m.astype(bool)] = (x[m.astype(bool)] - self.mean) / self.std
+
+        if obs_mask is None:
+            obs_mask = np.ones_like(x, dtype=np.float32)
+
+        x_p = self.patchify(np.asarray(x, dtype=np.float32), self.patch_size)
+        m_p = self.patchify(np.asarray(obs_mask, dtype=np.float32), self.patch_size)
+        density = m_p.mean(axis=1)  # (N,) observation density per patch
+
+        return {
+            "patches": torch.tensor(x_p).float(),
+            "obs_mask": torch.tensor(m_p).float(),
+            "density": torch.tensor(density).float(),
+        }
+
+    def encode(self, encoder, x, x_mark=None):
+        # dual-channel input: values + observation mask, both (B, C, T)
+        if isinstance(x, (tuple, list)):
+            x = torch.cat([t.unsqueeze(1) for t in x], dim=1)
+        emb, proj = encoder(x, x_mark)
+        return torch.mean(emb, dim=1)
+
 class PatchDataTransformer(DataTransformer):
     def __init__(self, config):
         super().__init__(config)
