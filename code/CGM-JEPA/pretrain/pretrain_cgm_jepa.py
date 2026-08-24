@@ -81,7 +81,8 @@ def parse_args(argv=None):
     p.add_argument("--num-layers", type=int, default=FACTOR_DEFAULTS["encoder_num_layers"])
     p.add_argument("--no-aug", action="store_true")
     p.add_argument("--no-circadian", action="store_true")
-    p.add_argument("--min-obs-frac", type=float, default=0.5)
+    p.add_argument("--min-obs-frac", type=float, default=0.25)
+    p.add_argument("--min-obs-cells", type=int, default=36)
     p.add_argument("--seed", type=int, default=43)
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--threads", type=int, default=None, help="torch CPU threads (default: all cores)")
@@ -113,6 +114,7 @@ def main(argv=None):
         mask_ratio_range=(args.mask_min, args.mask_max),
         augment=not args.no_aug,
         min_obs_frac=args.min_obs_frac,
+        min_obs_cells=args.min_obs_cells,
         max_windows=args.max_windows,
         seed=args.seed,
     )

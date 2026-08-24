@@ -9,3 +9,8 @@ code/*
 .backup/
 
 # M1 派生语料大文件（~96MB，可用 scripts/m1_*.py 从 datasets/ 再生）；2026-08-22 起入库，仅 datasets/ 原始数据不入
+
+# M3 训练产物（checkpoint/日志不入库，仅评估结果 CSV 入库）
+runs/**
+!runs/
+!runs/*.csv

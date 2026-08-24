@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # M3 factor matrix (STRATEGY.md §M3, plan A upgraded after M2 throughput):
-#   3 objectives x 3 archs x 3 seeds, stride 96 (~13k windows), 60 epochs
+#   3 objectives x 3 archs x 3 seeds, stride 288 (6.5k windows, all cohorts), 60 epochs
 #   + 3 ablations on mcr/dual seed43: no-TD, no-circadian, no-augmentation
 # All runs land in ../../runs/<name>; logs append to ../../runs/matrix.log
 set -u
@@ -16,7 +16,7 @@ run_one () {
   echo "=== $(date '+%F %T') START $name ===" >> "$LOG"
   "$PY" -m pretrain.pretrain_cgm_jepa \
     --data-dir ../../data/unified --splits ../../data/splits.json \
-    --epochs 60 --batch-size 128 --workers 2 --stride 96 --threads 9 \
+    --epochs 60 --batch-size 128 --workers 2 --stride 288 --threads 9 \
     --out "$RUNS/$name" "$@" >> "$LOG" 2>&1 \
     && echo "=== $(date '+%F %T') OK    $name ===" >> "$LOG" \
     || echo "=== $(date '+%F %T') FAIL  $name ===" >> "$LOG"

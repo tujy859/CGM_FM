@@ -141,7 +141,8 @@ class FactorPretrainLoader(Dataset):
         patch_size=12,
         mask_ratio_range=(0.5, 0.6),
         augment=True,
-        min_obs_frac=0.5,
+        min_obs_frac=0.25,
+        min_obs_cells=36,
         max_windows=None,
         seed=43,
         grid_minutes=5,
@@ -185,10 +186,14 @@ class FactorPretrainLoader(Dataset):
             g = subjects[subj].sort_values("timestamp")
             values, obs_mask, tod_idx = _align_to_grid(g, grid_minutes)
             for seg_v, seg_m, seg_t in _split_segments(values, obs_mask, tod_idx):
+                # window filter: density >= min_obs_frac AND at least
+                # min_obs_cells observed. The 0.25 default accommodates
+                # 15-min native cohorts (density ~1/3; STRATEGY.md §1.2
+                # keeps them as mask=0 cells, never interpolates).
                 for start in range(0, len(seg_v) - self.window + 1, self.stride):
                     w_v = seg_v[start:start + self.window]
                     w_m = seg_m[start:start + self.window]
-                    if w_m.mean() < min_obs_frac:
+                    if w_m.mean() < min_obs_frac or w_m.sum() < min_obs_cells:
                         continue
                     self.windows.append((w_v, w_m, seg_t[start:start + self.window]))
 

@@ -72,3 +72,6 @@ config/_*.json
 
 # Personal wandb-based loader (the published variant uses HF only)
 config/model_configs_wandb.py
+
+# M3 未训练对照编码器（随机初始化，可由 build_factor_encoder 再生）
+Output/untrained_jepa/

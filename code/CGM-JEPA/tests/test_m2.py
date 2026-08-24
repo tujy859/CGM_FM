@@ -294,25 +294,42 @@ def _run_synthetic_loader_tests():
     """Loader smoke on synthetic CSV + splits (no real corpus dependency)."""
     import pandas as pd
     with tempfile.TemporaryDirectory() as d:
-        # 2 subjects x 3 days at 5-min
+        # 2 subjects x 3 days at 5-min + 1 subject x 3 days at 15-min native
         rows = []
         for subj in ["a::s1", "a::s2"]:
             t0 = pd.Timestamp("2020-01-01")
             ts = pd.date_range(t0, periods=3 * 288, freq="5min")
             vals = 100 + 20 * np.sin(np.arange(len(ts)) / 50)
             rows.append(pd.DataFrame({"subject": subj, "timestamp": ts, "glucose_value": vals}))
+        ts15 = pd.date_range(pd.Timestamp("2020-01-01"), periods=3 * 96, freq="15min")
+        rows.append(pd.DataFrame({
+            "subject": "b::s15",
+            "timestamp": ts15,
+            "glucose_value": 100 + 20 * np.sin(np.arange(len(ts15)) / 50),
+        }))
         pd.concat(rows).to_csv(os.path.join(d, "a.csv"), index=False)
+        pd.concat([rows[0]]).to_csv(os.path.join(d, "b.csv"), index=False)
         with open(os.path.join(d, "splits.json"), "w") as f:
-            json.dump({"pretrain": ["a::s1", "a::s2"]}, f)
+            json.dump({"pretrain": ["a::s1", "a::s2", "b::s15"]}, f)
         ds = FactorPretrainLoader(d, os.path.join(d, "splits.json"), window=288,
-                                  patch_size=12, max_windows=10, seed=0)
+                                  patch_size=12, max_windows=50, seed=0)
         assert len(ds) > 0
         patches, mask_patches, tod = ds[0]
         assert patches.shape == (24, 12) and mask_patches.shape == (24, 12)
         assert tod.shape == (24, 2)
         # tod within unit circle
         assert (tod.norm(dim=-1) <= 1.0 + 1e-5).all()
-        print(f"  synthetic loader: {len(ds)} windows OK")
+        # 15-min native cohort must NOT be silently dropped (density ~1/3):
+        # count windows from b::s15 via a loader restricted to that subject
+        with open(os.path.join(d, "splits15.json"), "w") as f:
+            json.dump({"pretrain": ["b::s15"]}, f)
+        ds15 = FactorPretrainLoader(d, os.path.join(d, "splits15.json"), window=288,
+                                    patch_size=12, seed=0)
+        assert len(ds15) >= 2, "15-min cohort windows must survive the filter"
+        p15, m15, _ = ds15[0]
+        d15 = m15.mean().item()
+        assert 0.25 <= d15 <= 0.45, f"15-min density {d15} unexpected"
+        print(f"  synthetic loader: {len(ds)} windows OK (incl. {len(ds15)} from 15-min subject)")
 
 
 def main():
