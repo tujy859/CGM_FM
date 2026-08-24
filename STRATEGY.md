@@ -178,11 +178,18 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
 - **设计偏差（可追溯）**：①mask ratio 逐批次采样 U[0.5,0.6]（逐样本采样会导致 collate 尺寸不齐；样本内排列仍逐样本独立，B=128 下统计等价）②dual 的 state/event token 为骨干输出的事后投影（GlucoFM 细节未公开，滤波分解在输入侧忠实实现）③causal 目标用因果注意力+next-patch 回归头（连续值不离散化，消除 tokenize 混淆变量）
 - **吞吐实测（M3 关键输入）**：9 线程 CPU、B=128、最重的 mcr/dual 组合 0.062s/step、2058 窗/s；全量非重叠语料 4625 窗（加载 5.4s，观测密度均值 0.71）→ 36 step/epoch，60 epoch ≈ 2.5 分钟/组。**结论：CPU 方案 A 预算可大幅上调——3 seed × 9 组全矩阵 + 消融（约 32 次训练）预计数小时内可完成，无需云 GPU**；如需更大有效语料可用 --stride 48（约 2.7 万窗，~13min/组）
 
-### M3：因子矩阵预训练（CPU 预算，两套方案）
+### M3：因子矩阵预训练（CPU 预算，两套方案）✅ 已完成（2026-08-25，方案 A 升级版）
 
 **2026-08-23 更新：M2 吞吐实测后，方案 A 预算大幅宽裕（0.062s/step，全矩阵 32 次训练预计数小时），默认执行 3 seed 全矩阵；窗口数不足时用 --stride 48 扩有效语料。**
 
 完整矩阵：3 目标 × 3 架构 × 3 seed + 5 项消融 ≈ 32 次预训练。
+
+**M3 执行记录**（2026-08-25）：
+- **语料修复（关键 bug）**：首版窗口过滤 min_obs_frac=0.5 会把 15min 原生队列全部滤掉——对齐后密度仅 ~1/3。已改为 `密度≥0.25 且 观测格数≥36`，语料 4625→**6519 窗**（补回 shanghait1dm 152 + shanghait2dm 397 窗；bris/t1d_uom 覆盖也增加）。首次矩阵启动后发现此问题，废弃重跑
+- **park_2025 结构性不贡献**：98 段为餐次重复段（约 3.3h/段），与 24h 窗协议根本不兼容，0 窗。cgmacros 覆盖同类人群的评估角色，可接受；记录为已知局限
+- 实际执行：`scripts/run_factor_matrix.sh`——3 目标 × 3 架构 × 3 seed（43/44/45）= 27 组 + mcr/dual 消融 3 组（notd/nocircadian/noaug），stride 288、60 epochs、B=128、threads 9
+- **全部 30 组 OK、零失败**，总耗时约 2h55m（单组 4–9 分钟，cnn 最快）；产物 `runs/<name>/{encoder.pt,factor_config.json,history.json}`
+- 运维坑记录：①后台长任务必须 `setsid` 脱离会话（工具超时会组杀进程）；②`pkill -f` 会匹配自身命令行自杀，用显式 PID；③torch 默认 18 线程在小模型上比固定 9 线程慢 ~7 倍
 
 **方案 A（默认，本机 CPU）——缩减矩阵**：
 - 9 组（3×3）各 1 seed；epochs 120→60；预训练窗口覆盖率降至 ~30%（约 5–6 万窗口）；消融只保留 2 项最关键（A2×O3 去双流、去增强）
@@ -196,9 +203,16 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
 
 产出：checkpoint + 训练日志 + CPU 吞吐实测记录。
 
-### M4：三轨评估（3–4 天）
-跑轨道 1/2 全矩阵 + 轨道 3 基线；分析：目标×架构交互、分层（数据集/采样率/人群）、UMAP、逐层探针。
-产出：结果表 + 图。
+### M4：三轨评估（3–4 天）◐ 轨道 1 完成（2026-08-25），轨道 2/3 待做
+
+**M4 轨道 1 执行记录**（2026-08-25）：
+- `scripts/eval_factor_probes.py`：冻结 encoder → L2-LR 探针；subject 级多天池化 concat(mean,max)；重复分层分组 CV（5 折 × 10 重复，groups=subject）；AUROC + PR-AUC。33 个模型（27 因子矩阵 + 3 消融 + 官方 cgm_jepa/x_cgm_jepa + 未训练对照）× 8 任务×队列格 = 330 行，产物 `runs/eval_track1.csv`
+- 任务矩阵落地：cgmacros 全 5 任务 + shanghait2dm 3 任务（obesity/hypoglycemia 阳性数 <5 无法 CV 跳过）；hall 无标签本轮跳过
+- **协议有效性验证**：置换检验（打乱标签）real AUROC 0.775 → permuted 0.519±0.118，测量无系统性假阳性
+- **初步结果（宏平均 PR-AUC / 8 格）**：最佳 mcr/cnn 0.724、mcr/plain 0.723；官方 CGM-JEPA 权重 0.716；**未训练随机对照 0.724 与最优持平**——当前语料规模下判别式增益不显著
+- 唯一强信号格 shanghait2dm/diabetes_risk（所有模型 AUROC 0.80+，含对照），其余 7 格弱信号
+- 矩阵内效应：**TD 头消融伤害最大（ΔAUROC -0.034）**；noaug -0.005；nocircadian 反而 +0.013（昼夜编码在此规模略负贡献）
+- 结论与下一步：①扩大有效预训练语料（stride 重叠 2–4 倍、epochs 上调——CPU 吞吐允许）②轨道 2 生成式探针（插补/预测）可能比小样本判别式更灵敏 ③hall glucotype 自算标签补齐后纳入
 
 ### M5：报告（2 天）
 复现结论（与 GlucoFM 论文数字对照）+ 设计空间实证 + 局限（Wear-CGM 缺失影响、β 细胞任务放弃原因）。
