@@ -9,9 +9,10 @@
 
 ## 目录约定
 - `papers\` — 论文 PDF 与全文提取（.txt/.md），已入库
+- `reports\` — **工作报告归档层（已入库）**：每个里程碑/大任务的完整报告必须写在这里，命名规范与索引见 `reports\README.md`
 - `code\CGM-JEPA\` — **宿主仓库，已 vendor 为普通文件入库**（含 M0 修复、ts2vec 相对导入修复、HF 资产 `Output\`+`Dataset_Open\` 22MB；无嵌套 .git，直接改文件提交即可）。其余三仓（CGMformer/cgmlsm/GluFormer）为本地参考克隆，不入库
 - `code\CGM-JEPA\models\ts2vec\` — 原 ts2vec 子模块，同样已 vendor（含修复）；上游断链的 `5cde9ce` gitlink 问题随之消失
-- `datasets\` — 原始与解压数据（不入库）；`data\` — 统一格式产物（已入库）；`runs\`（待建）— 训练输出
+- `datasets\` — 原始与解压数据（不入库）；`data\` — 统一格式产物（已入库）；`runs\` — 训练输出（checkpoint/日志不入库，评估结果 CSV 入库）
 - `.backup\` — vendoring 前的 git 历史 bundle（仅本机，gitignore）
 
 ## 硬约束（违反会导致返工）
@@ -29,6 +30,7 @@
 
 ## 执行规范
 - 按 STRATEGY.md §5 的 M0→M5 顺序推进；每个里程碑完成后更新 STRATEGY.md 对应小节的状态标记
+- **报告归档（强制）**：每完成一个里程碑或大型任务（训练矩阵、评估轨道、数据集扩充、论文调研、重要 bug 修复），必须在 `reports\` 写一份完整报告并更新 `reports\README.md` 索引。命名：里程碑 `M<N>_<slug>.md`、里程碑内轨道 `M<N>_<track>_<slug>.md`、日常大任务 `YYYY-MM-DD_<slug>.md`。必含：状态日期/目标/执行与偏差/关键数字/产物路径/坑与决策。STRATEGY.md 保留简版状态记录，完整版以 reports\ 为准
 - 代码改动落点已在 README.md §复现落点 与 STRATEGY.md §M2 中写明（6 个文件），改动前先读原文件
 - 语料划分 subject-disjoint 是铁律（预训练与评估受试者不得重叠）
 - 所有评估协议改动要记录在 STRATEGY.md，保持可追溯
