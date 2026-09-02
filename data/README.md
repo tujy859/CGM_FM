@@ -31,14 +31,16 @@ subject 命名：`<dataset>::<原ID>`（park_2025 为 `park_2025::<ID>#r<rep>` �
 | park_2025 | 98 段（38 人物理人） | 23,520 | 318 | 5min | 预训练 |
 | d1namo | 9 | 8,055 | 697 | 5min | 预训练 |
 | t1d_uom | 17 | 340,224 | 40,126 | 5min | 预训练 |
-| **合计** | **669 段** | **2,059,954** | **415,798** | — | 预训练池 472 段（412 人） |
+| weinstock_2016（2026-09-01 增） | 200 | 647,858 | 554,400 | 5min | 180 预训练 + 20 评估（生成式探针） |
+| **合计** | **869 段** | **2,707,812** | **970,198** | — | 预训练池 652 段 |
 
 对照 GlucoFM 论文（477 人 / 109,066 h）：colas 9,559h vs 9,544h、bigideas 3,175h vs 3,017h，口径吻合；总量 3.8 倍（长时程集贡献）。已放弃：PhysioCGM（多模态 9.2GB）、HUPA-UCM / AZT1D（Mendeley 直连不可达）。
 
 ## 划分（splits.json，seed=42）
 
-- pretrain 472 段；eval：cgmacros 30 / shanghait2dm 65 / hall 57；泄漏断言已在生成脚本内校验
+- pretrain 652 段（2026-09-01 增 weinstock 180 后；此前 472 段）；eval：cgmacros 30 / shanghait2dm 65 / hall 57 / weinstock_2016 20（生成式探针用，无标签任务）；泄漏断言已在生成脚本内校验
 - 注意：park_2025 的 98 段来自 38 人，按"段"入池（同一人各 repeat 段不会跨池，因整数据集只进 pretrain）
+- weinstock_2016 增补见 `scripts/m4_weinstock_unify.py`：时间轴为去标识化虚拟日期（1900-01-01+天数），日内时刻与相对间隔真实，下游仅用 tod/间隔，安全
 
 ## 标签（labels/labels.json）
 
@@ -46,6 +48,13 @@ subject 命名：`<dataset>::<原ID>`（park_2025 为 `park_2025::<ID>#r<rep>` �
 - 任务阳性率：diabetes_risk 60% / insulin_resistance 51% / hyperlipidemia 49% / obesity 17% / hypoglycemia 24%
 - 单位换算：HbA1c mmol/mol ÷10.93 → %；胰岛素 pmol/L ÷6.945 → µIU/mL；HOMA-IR = FPG×Ins/405；血脂阈值 mmol/L（TG≥1.7 / TC≥5.2 / LDL≥3.4 任一为高脂血症）；CGMacros 血脂 mg/dL ÷38.67（TG ÷88.67）
 - hypoglycemia：Shanghai 取 Summary yes/no；CGMacros 由 CGM 自算（≥3 个连续 5min 点 <70 mg/dL）
+
+## Hall glucotype 标签（2026-09-01 补，labels/labels.json + labels/glucotype_hall.json）
+
+- 按 Hall 2018 方法自算（`scripts/m4_hall_glucotype.py`）：2.5h 滑窗 75% 重叠 → CID-DTW（Sakoe-Chiba band 3）→ 谱聚类 3 类 → 受试者按多数窗归类；全局 z-score（逐窗 z 会抹掉变异性信号，已验证）
+- 验证：簇均血糖 72/93/121 mg/dL vs 论文 77/96/122；severe 受试者 23 人与论文一致（L/M 划分偏移：1/33 vs 论文 20/14）
+- labels.json 新增 57 个 hall 键（glucotype 三类 / glucotype_severe 二分类 S=1，阳性率 40% / fractions）；总键数 214
+- 偏差记录：步长 35min（论文 37.5min 非 5min 网格整）、SG(7,2) 平滑（论文"polynomial smoothing"未指明）、每受试者上限 80 窗（论文 238/人首 N 窗，为算力裁剪）
 
 ## 再生方法
 

@@ -1,0 +1,636 @@
+{
+  "method": "Hall 2018 self-computed (see scripts/m4_hall_glucotype.py docstring)",
+  "seed": 42,
+  "window_cells": 30,
+  "stride_cells": 7,
+  "cap_windows": 80,
+  "subjects": {
+    "hall_2018::1636-69-001": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.025,
+        "moderate": 0.45,
+        "severe": 0.525
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-026": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.163,
+        "severe": 0.838
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-028": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.412,
+        "severe": 0.588
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-032": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.425,
+        "severe": 0.575
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-035": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.013,
+        "moderate": 0.3,
+        "severe": 0.688
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-048": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.738,
+        "severe": 0.263
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-053": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.025,
+        "moderate": 0.7,
+        "severe": 0.275
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-060": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.087,
+        "severe": 0.912
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-064": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.175,
+        "severe": 0.825
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-069": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.013,
+        "moderate": 0.438,
+        "severe": 0.55
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-090": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.05,
+        "moderate": 0.412,
+        "severe": 0.537
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-091": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.025,
+        "moderate": 0.637,
+        "severe": 0.338
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-100": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.062,
+        "moderate": 0.738,
+        "severe": 0.2
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-104": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.2,
+        "moderate": 0.688,
+        "severe": 0.113
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-107": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.263,
+        "severe": 0.738
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-111": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.662,
+        "severe": 0.338
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-114": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.35,
+        "severe": 0.65
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-69-123": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.25,
+        "moderate": 0.65,
+        "severe": 0.1
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-70-1002": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.725,
+        "severe": 0.275
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-70-1003": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.225,
+        "moderate": 0.575,
+        "severe": 0.2
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-70-1005": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.237,
+        "severe": 0.762
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-70-1008": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.087,
+        "moderate": 0.537,
+        "severe": 0.375
+      },
+      "n_windows": 80
+    },
+    "hall_2018::1636-70-1010": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.025,
+        "moderate": 0.225,
+        "severe": 0.75
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-001": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.4,
+        "moderate": 0.5,
+        "severe": 0.1
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-002": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.05,
+        "moderate": 0.75,
+        "severe": 0.2
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-003": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.062,
+        "moderate": 0.613,
+        "severe": 0.325
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-004": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.025,
+        "moderate": 0.113,
+        "severe": 0.863
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-006": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.338,
+        "moderate": 0.625,
+        "severe": 0.037
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-007": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.362,
+        "severe": 0.637
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-008": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.138,
+        "moderate": 0.787,
+        "severe": 0.075
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-009": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.362,
+        "severe": 0.637
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-010": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.087,
+        "moderate": 0.787,
+        "severe": 0.125
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-011": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.062,
+        "moderate": 0.7,
+        "severe": 0.237
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-012": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.087,
+        "moderate": 0.562,
+        "severe": 0.35
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-013": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.087,
+        "moderate": 0.725,
+        "severe": 0.188
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-015": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.013,
+        "moderate": 0.35,
+        "severe": 0.637
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-017": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.013,
+        "moderate": 0.375,
+        "severe": 0.613
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-018": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.25,
+        "severe": 0.75
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-019": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.037,
+        "moderate": 0.475,
+        "severe": 0.487
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-020": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.2,
+        "moderate": 0.487,
+        "severe": 0.312
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-021": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.125,
+        "severe": 0.875
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-022": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.525,
+        "severe": 0.475
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-023": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.25,
+        "moderate": 0.662,
+        "severe": 0.087
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-024": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.05,
+        "moderate": 0.575,
+        "severe": 0.375
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-025": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.225,
+        "moderate": 0.7,
+        "severe": 0.075
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-026": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.388,
+        "moderate": 0.525,
+        "severe": 0.087
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-027": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.075,
+        "moderate": 0.863,
+        "severe": 0.062
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-028": {
+      "glucotype": "low",
+      "glucotype_3class": 0,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.787,
+        "moderate": 0.212,
+        "severe": 0.0
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-030": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.175,
+        "moderate": 0.588,
+        "severe": 0.237
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-032": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.05,
+        "moderate": 0.7,
+        "severe": 0.25
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-033": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.2,
+        "moderate": 0.55,
+        "severe": 0.25
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-035": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.0,
+        "moderate": 0.688,
+        "severe": 0.312
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-036": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.05,
+        "moderate": 0.438,
+        "severe": 0.512
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-037": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.113,
+        "moderate": 0.675,
+        "severe": 0.212
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-039": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.013,
+        "moderate": 0.575,
+        "severe": 0.412
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-040": {
+      "glucotype": "moderate",
+      "glucotype_3class": 1,
+      "glucotype_severe": 0,
+      "fractions": {
+        "low": 0.175,
+        "moderate": 0.637,
+        "severe": 0.188
+      },
+      "n_windows": 80
+    },
+    "hall_2018::2133-041": {
+      "glucotype": "severe",
+      "glucotype_3class": 2,
+      "glucotype_severe": 1,
+      "fractions": {
+        "low": 0.075,
+        "moderate": 0.312,
+        "severe": 0.613
+      },
+      "n_windows": 80
+    }
+  }
+}
