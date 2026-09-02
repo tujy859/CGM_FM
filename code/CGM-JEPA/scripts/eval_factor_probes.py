@@ -33,6 +33,15 @@ from models.encoder import Encoder
 
 COHORTS = ["cgmacros", "shanghait2dm"]
 TASKS = ["diabetes_risk", "insulin_resistance", "hyperlipidemia", "obesity", "hypoglycemia"]
+# 2026-09-01: hall glucotype labels self-computed (Hall 2018 method) ->
+# hall joins with the binary severe-glucotype task; weinstock_2016 eval
+# cohort carries no classification labels (generative probes only)
+COHORT_TASKS = {
+    "cgmacros": TASKS,
+    "shanghait2dm": TASKS,
+    "hall": ["glucotype_severe"],
+    "weinstock_2016": [],
+}
 MIN_POS = 5  # drop task x cohort cells with fewer positives (cannot stratify)
 
 
@@ -218,11 +227,12 @@ def main(argv=None):
     # per-cohort subject -> df map
     cohort_dfs = {}
     for cohort, subs in eval_subjects.items():
-        if cohort == "hall":
-            continue  # labels pending (glucotype self-compute), documented
+        if not COHORT_TASKS.get(cohort):
+            print(f"[eval] cohort {cohort}: no labeled tasks, skipped")
+            continue
         dfs = {}
-        prefix = "cgmacros_dexcom::" if cohort == "cgmacros" else f"{cohort}::"
-        wanted = {prefix + s.split("::")[-1] if not s.startswith(prefix) else s for s in subs}
+        # splits store full subject ids (e.g. "hall_2018::1636-69-001")
+        wanted = set(subs)
         for fname in sorted(os.listdir(args.data_dir)):
             if not fname.endswith(".csv") or fname == "summary.csv":
                 continue
@@ -250,7 +260,7 @@ def main(argv=None):
             pooled = extract_features(encoder, dfs, args, mean, std)
             subs = sorted(pooled.keys())
             Xall = np.stack([pooled[s] for s in subs])
-            for task in TASKS:
+            for task in COHORT_TASKS.get(cohort, TASKS):
                 ys, keep = [], []
                 for i, s in enumerate(subs):
                     v = labels.get(s, {}).get(task)

@@ -75,8 +75,8 @@ subject, timestamp, glucose_value   # mg/dL
 
 ### 1.6 语料划分（subject-disjoint 铁律，实际执行版）
 
-- 预训练池（472 段-subject / 412 人物理人）：Colas 208 + S22 + ShanghaiT1 12 + ShanghaiT2 35 + CGMacros 15 + BIG IDEAs 16 + Bris 20 + UCHTT1DM 20 + Park 38（98 段）+ D1NAMO 9 + T1D-UOM 17（PhysioCGM/HUPA-UCM/AZT1D 已放弃，见 M1 记录）
-- 评估队列（held-out）：CGMacros 30、ShanghaiT2DM 65、Hall 57
+- 预训练池（2026-09-01 扩容后 652 段-subject）：Colas 208 + S22 + ShanghaiT1 12 + ShanghaiT2 35 + CGMacros 15 + BIG IDEAs 16 + Bris 20 + UCHTT1DM 20 + Park 38（98 段）+ D1NAMO 9 + T1D-UOM 17 + **Weinstock 180（2026-09-01 增，GlucoBench 处理版，时间轴为去标识化虚拟日期，管线仅用 tod/间隔故安全）**。此前为 472 段；**注意：现有 M3 checkpoint 均为 472 段语料训练，扩容重训为独立决策**
+- 评估队列（held-out）：CGMacros 30、ShanghaiT2DM 65、Hall 57（+glucotype_severe 标签 2026-09-01 自算补齐）、Weinstock 20（2026-09-01 增，仅生成式探针，无分类标签）
 - 5 折 subject-grouped CV × 10 重复，PR-AUC 主指标
 
 ## 2. 模型层（三架构，共享接口，参数预算 0.5–0.8M）
@@ -203,7 +203,7 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
 
 产出：checkpoint + 训练日志 + CPU 吞吐实测记录。
 
-### M4：三轨评估（3–4 天）◐ 轨道 1 完成（2026-08-25），轨道 2/3 待做
+### M4：三轨评估（3–4 天）◐ 轨道 1/2 完成（2026-08-25 / 2026-09-01），轨道 3 待做
 
 **M4 轨道 1 执行记录**（2026-08-25）：
 - `scripts/eval_factor_probes.py`：冻结 encoder → L2-LR 探针；subject 级多天池化 concat(mean,max)；重复分层分组 CV（5 折 × 10 重复，groups=subject）；AUROC + PR-AUC。33 个模型（27 因子矩阵 + 3 消融 + 官方 cgm_jepa/x_cgm_jepa + 未训练对照）× 8 任务×队列格 = 330 行，产物 `runs/eval_track1.csv`
@@ -213,6 +213,19 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
 - 唯一强信号格 shanghait2dm/diabetes_risk（所有模型 AUROC 0.80+，含对照），其余 7 格弱信号
 - 矩阵内效应：**TD 头消融伤害最大（ΔAUROC -0.034）**；noaug -0.005；nocircadian 反而 +0.013（昼夜编码在此规模略负贡献）
 - 结论与下一步：①扩大有效预训练语料（stride 重叠 2–4 倍、epochs 上调——CPU 吞吐允许）②轨道 2 生成式探针（插补/预测）可能比小样本判别式更灵敏 ③hall glucotype 自算标签补齐后纳入
+
+**M4 轨道 2 执行记录**（2026-09-01）：
+- `scripts/eval_track2_generative.py`：冻结 encoder（33 模型）+ 轻 decoder（只训 decoder，训练窗来自预训练池，subject-disjoint）。插补探针：遮 1–3 段 2–12 格 → 2 层卷积 decoder 重建（全局缓存 token，3000 窗 × 150 epoch，cosine 退火）；预测探针：24h 表征池化 → MLP 出 30/60/120min。锚点：线性插值（插补）与 persistence（预测）。hall 因无标签限制首次纳入；协议细节与坑见报告 M4_track2
+- **关键实现坑**：①decoder 初版 GRU 训练步数不足 → 假象"全员烂"；改 2 层 conv + 150 epoch + lr 3e-3 后 oracle 可见格解码 4.4 mg/dL 验证代码正确 ②hall glucotype 标签若逐窗 z-score 会抹掉变异性信号（全 moderate），须全局 mean/SD 归一化
+- **结果（宏平均，越低越好）**：插补 MAE——最优 causal_dual 16.6 / mcr_dual 17.3 vs 未训练 23.8（**预训练增益 -30%，轨道 1 看不到的信号**）vs 线性插值锚点 2.1（所有表征均不支持精确值重建，oracle 也只 4.4）；预测 RMSE——30m persistence 无敌（27.5 vs 44+），**120m 表征反超**（mcr_dual 41.0 / causal_dual 40.4 vs persistence 48.3）
+- **网格效应**：arch 主效应 > 目标主效应——dual 一致最优；recon 目标在预测上全面最差（与 Q1 相关：掩码重建表征不利因果外推）；TD 头消融伤害最大（插补 +1.2 / 120m +1.9，与轨道 1 方向一致）；官方 CGM-JEPA 权重 ≈ 未训练水平（插补 20.5–21.8 / 预测 50.2–51.2），同语料因子预训练全面超过官方编码器
+- **Q3 线索**：判别增益缺失（轨道 1）与生成增益显著（轨道 2）并存——当前规模下预训练收益集中在生成侧
+- 数据层同步变更（2026-09-01，详见 reports/2026-09-01_glucotype_weinstock.md）：hall glucotype 自算标签入 labels.json（57 人，severe 阳性 23/57，簇均血糖 72/93/121 vs 论文 77/96/122）；Weinstock 180 入预训练池（472→652 段）+ 20 为新评估队列；track1 脚本改 per-cohort 任务映射并修 hall 前缀 bug（旧代码从未真正加载过 hall）
+
+**M4 轨道 1 扩展执行记录**（2026-09-01，`runs/eval_track1_v2.csv`，363 行）：
+- 新增 hall/glucotype_severe 任务格（33 模型）；原 8 格 330 行与旧结果**逐行完全一致（最大差异 0.0）**，验证脚本重构无行为漂移
+- **hall/glucotype_severe 成为判别式首个明确预训练增益格**：最优 mcr_plain 0.984 / mcr_cnn 0.979 / causal_dual 0.979，未训练对照 0.841 / 官方 0.837–0.853（增益 +0.12~0.14 AUROC）；网格 causal_dual 0.969、mcr 全架构 ~0.96、recon 偏弱（recon_cnn 0.759）——与轨道 2 的 recon 劣势同向
+- 解释：glucotype 为 CGM 形状内禀表型（标签本身从 CGM 变异性聚类而来），表征质量直接兑现；轨道 1 原有"预训练无判别增益"结论需修正为"增益集中在 CGM 内禀任务，跨域代谢标签任务（HbA1c/IR 等，需外部生理中介）在当前规模下无增益"
 
 ### M5：报告（2 天）
 复现结论（与 GlucoFM 论文数字对照）+ 设计空间实证 + 局限（Wear-CGM 缺失影响、β 细胞任务放弃原因）。
@@ -230,5 +243,5 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
 
 1. 工作区根已有 `AGENTS.md`（新 session 自动加载）：项目背景、硬约束（CPU-only / uv / 依赖 pin / 纯文本公式）、执行规范
 2. 读本文件 + `README.md`（15 分钟），从 M0 开始执行（§5 有完整命令）
-3. 目录约定：`papers/` 论文与全文提取（入库）；`code/CGM-JEPA/` 宿主仓已 vendor 入库（含修复与 HF 资产，其余三参考仓不入库）；`datasets/` 原始+解压数据（不入库）；`data/` 统一格式产物（入库）；`runs/`（待建）训练输出
+3. 目录约定：`papers/` 论文与全文提取（入库）；`reports/` 工作报告归档层（入库，每个里程碑/大任务完成后写完整报告并更新其 README 索引，规范见 `reports/README.md`）；`code/CGM-JEPA/` 宿主仓已 vendor 入库（含修复与 HF 资产，其余三参考仓不入库）；`datasets/` 原始+解压数据（不入库）；`data/` 统一格式产物（入库）；`runs/` 训练输出（checkpoint/日志不入库，评估 CSV 入库）
 4. 所有公式用纯文本写（CLI 不渲染 LaTeX）
