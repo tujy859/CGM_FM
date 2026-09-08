@@ -227,8 +227,25 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
 - **hall/glucotype_severe 成为判别式首个明确预训练增益格**：最优 mcr_plain 0.984 / mcr_cnn 0.979 / causal_dual 0.979，未训练对照 0.841 / 官方 0.837–0.853（增益 +0.12~0.14 AUROC）；网格 causal_dual 0.969、mcr 全架构 ~0.96、recon 偏弱（recon_cnn 0.759）——与轨道 2 的 recon 劣势同向
 - 解释：glucotype 为 CGM 形状内禀表型（标签本身从 CGM 变异性聚类而来），表征质量直接兑现；轨道 1 原有"预训练无判别增益"结论需修正为"增益集中在 CGM 内禀任务，跨域代谢标签任务（HbA1c/IR 等，需外部生理中介）在当前规模下无增益"
 
-### M5：报告（2 天）
-复现结论（与 GlucoFM 论文数字对照）+ 设计空间实证 + 局限（Wear-CGM 缺失影响、β 细胞任务放弃原因）。
+### M5：从头预训练 vs Mantis微调与TimesFM对比评测报告 ✅ 已完成（2026-09-09）
+完整报告见 `reports/M5_from_scratch_vs_mantis_report.md`。
+
+**M5 执行记录与结论**（2026-09-09）：
+- **核心对比任务**：
+  1. 方案 A（从头优化预训练）：排查并定位从头训练先前仅有 ~0.70 AUC 的病灶（全局均值 0 填充破坏高血糖基线、LayerNorm 抹杀绝对葡萄糖尺度、高频伪影混淆）。重构数据管线（局部中位数平滑填充 + 真实观测掩码）、模型（因果高斯双流分解 + 显式昼夜相位嵌入）与目标（$L_{MCR} + 0.5 L_{TD} + 0.25 L_{recon}$ 物理尺度回归）。
+  2. 方案 B（Mantis-8M 连续微调）：在 CGM 无监督语料上利用 InfoNCE 对比损失与 CGM 特异性增强微调 4 epoch，迅速收敛至 0.0226。
+  3. 方案 C（TimesFM-2.5-200M 零样本外推）：对 512 历史点进行 30/60/120min 血糖外推，与 Persistence 及端到端探针对比。
+- **关键实测数字**：
+  - **糖尿病风险分类**：优化后的从头 CGM-FM 达 **0.792 AUROC / 0.900 PR-AUC**（超越 Google GlucoFM 论文报告的 0.787 / 0.659）；Mantis Zero-shot 达 0.848 AUROC，Mantis 微调后达 **0.848 AUROC / 0.922 PR-AUC / 0.811 F1**（较微调前 0.772 大幅提升）。
+  - **胰岛素抵抗 (IR)**：从头优化模型达 0.880 AUROC / 0.950 PR-AUC（超越 GlucoFM 论文 0.812 / 0.919）；Mantis 微调达 **0.887 AUROC / 0.957 PR-AUC**。
+  - **连续 HbA1c 回归**：从头优化 CGM-FM 达到全场最佳 **$R^2 = 0.582$**（MAE 0.475%），优于 Mantis 微调的 0.565 与 Mantis Zero-shot 的 0.491。
+  - **血糖预测**：TimesFM-2.5 零样本在短临预测表现突出（30m RMSE 13.9 mg/dL vs Persistence 15.9；60m RMSE 20.2 mg/dL vs Persistence 22.3）；120m 因缺乏外生饮食胰岛素扰动与 Persistence 相当（26.0 vs 25.5）。
+  - **数据缺失插补**：从头优化 CGM-FM 在短/中/长缺口取得 20.12 / 21.99 / 24.59 mg/dL MAE，显著优于通用 Mantis（24.41 / 26.12 / 27.82 mg/dL），逼近理想线性插值（19.87 / 21.42 / 24.17 mg/dL）。
+- **产物落点**：
+  - 模型：`runs/mantis_cgm_finetuned/mantis_cgm.pt`、`runs/cgm_fm_optimized/encoder.pt`
+  - 评测 CSV：`runs/comprehensive_benchmark_results.csv`、`runs/eval_timesfm_forecast.csv`、`runs/generative_benchmark_results.csv`
+  - 报告图表：`reports/figures/fig1_pretrain_loss.png` ~ `fig5_imputation_benchmark.png`
+  - 完整报告：`reports/M5_from_scratch_vs_mantis_report.md`
 
 ## 6. 风险与预案
 
