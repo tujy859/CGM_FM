@@ -457,7 +457,8 @@ def main():
 
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"[Benchmark] Running evaluation on device: {device}")
 
     dfs = load_subjects_data(args.data_dir, args.splits)
 
@@ -468,6 +469,7 @@ def main():
     print("[Benchmark] Loading Mantis-8M Zero-shot...")
     m_zero = Mantis8M(device=device).from_pretrained("paris-noah/Mantis-8M")
     m_zero.pre_training = False
+    m_zero.to(device)
     m_zero.eval()
     models_dict["mantis_zero_shot"] = ("mantis_zero", m_zero, {})
 
@@ -478,6 +480,7 @@ def main():
         m_ft = Mantis8M(device=device)
         m_ft.load_state_dict(torch.load(ft_path, map_location=device))
         m_ft.pre_training = False
+        m_ft.to(device)
         m_ft.eval()
         models_dict["mantis_cgm_finetuned"] = ("mantis_ft", m_ft, {})
 
@@ -485,7 +488,8 @@ def main():
     opt_path = "runs/cgm_fm_optimized"
     if os.path.exists(os.path.join(opt_path, "factor_config.json")):
         print(f"[Benchmark] Loading Optimized CGM-FM from {opt_path}...")
-        enc_opt, cfg_opt = load_factor_run(opt_path, device="cpu")
+        enc_opt, cfg_opt = load_factor_run(opt_path, device=device)
+        enc_opt.to(device)
         enc_opt.eval()
         models_dict["cgm_fm_optimized"] = ("cgm_fm_opt", enc_opt, {
             "mean": cfg_opt.get("data_mean", 124.6),
@@ -497,6 +501,7 @@ def main():
     if os.path.isdir(official_path):
         print(f"[Benchmark] Loading Official CGM-JEPA from {official_path}...")
         enc_base = Encoder.from_pretrained(official_path)
+        enc_base.to(device)
         enc_base.eval()
         models_dict["cgm_jepa_official"] = ("cgm_jepa_official", enc_base, {"mean": 124.6, "std": 45.8})
 

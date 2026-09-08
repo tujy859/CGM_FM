@@ -1,4 +1,4 @@
-﻿# AGENTS.md — CGM_FM 项目工作区
+# AGENTS.md — CGM_FM 项目工作区
 
 ## 项目背景
 本目录（C:\Coding\Work\CGM_FM，位于工作区根的子目录）的任务：调研并复现/构建 CGM（连续血糖监测）时序基础模型。起点论文 GlucoFM（arXiv:2605.30865，Google Research），对比工作 GluFormer / CGMformer / CGM-LSM / CGM-JEPA。
@@ -16,11 +16,10 @@
 - `.backup\` — vendoring 前的 git 历史 bundle（仅本机，gitignore）
 
 ## 硬约束（违反会导致返工）
-- **本机无 GPU，只有 CPU 和微软 NPU**：
-  - 安装 torch 必须用 CPU 版：`uv pip install torch --index-url https://download.pytorch.org/whl/cpu`（或默认 PyPI 源），**禁止** cu121/cu124 等 CUDA 源
-  - 代码中 device 一律自动检测（`torch.device("cuda" if torch.cuda.is_available() else "cpu")`），本机实际为 cpu
-  - 微软 NPU **不支持 PyTorch 训练**（仅推理可尝试 ONNX Runtime DirectML，不作默认依赖，不装）
-  - 训练耗时按 CPU 预算规划：模型 ~0.7M 参数级，实验矩阵按 STRATEGY.md §5 M3 的缩减方案（方案 A）执行；若 CPU 实测过慢，升级到方案 B（云 GPU）
+- **本机配备独立 GPU（NVIDIA GeForce GTX 1660 SUPER, 6GB 显存，驱动 591.86，支持 CUDA 12.x/13.x）**：
+  - PyTorch 使用支持 CUDA 的版本（例如 `cu124`：`uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124`），充分利用 GPU 加速训练与评估
+  - 代码中 device 一律动态检测（`torch.device("cuda" if torch.cuda.is_available() else "cpu")`），优先使用 cuda
+  - 显存预算为 6GB，批大小（Batch Size）应合理设置以防 OOM（如 B=64 或 B=128）
 - **环境管理用 uv，不用 conda**
 - 依赖硬 pin 勿动：CGM-JEPA 的 `transformers==4.33.3`、`huggingface_hub==0.24.0`（momentfm/mantis 锁死）
 - 输出公式用**纯文本**（CLI 不渲染 LaTeX），如 `S_next = S + g(S, E, tau)`

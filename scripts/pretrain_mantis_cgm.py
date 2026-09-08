@@ -80,8 +80,8 @@ def main():
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--lr", type=float, default=5e-5)
-    parser.add_argument("--device", default="cpu")
-    parser.add_argument("--max-samples", type=int, default=2500, help="Subset size for CPU training budget")
+    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--max-samples", type=int, default=2500, help="Subset size for training budget")
     args = parser.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)
