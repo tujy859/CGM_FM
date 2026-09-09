@@ -246,6 +246,12 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
   - 评测 CSV：`runs/comprehensive_benchmark_results.csv`、`runs/eval_timesfm_forecast.csv`、`runs/generative_benchmark_results.csv`
   - 报告图表：`reports/figures/fig1_pretrain_loss.png` ~ `fig5_imputation_benchmark.png`
   - 完整报告：`reports/M5_from_scratch_vs_mantis_report.md`
+- **GPU 算力释放升级（2026-09-10）**：
+  - 激活 NVIDIA GTX 1660 SUPER (6GB)，全面放开语料重叠采样（近 3 万窗口）与轮数（25 Epochs），耗时仅数分钟。
+  - 完成从头基模三架构（Dual-Hybrid, Plain-MCR, Causal-CNN）与 Mantis 15-epoch 深度微调。
+  - 预测任务引入专用监督小模型（LSTM & GRU），在 2 小时（120m）预测上以 RMSE 24.79 mg/dL 全面战胜 TimesFM-2.5 (26.04) 与 Persistence (27.64)！
+  - 临床任务纳入 11 项标准 CGM 数字生物标志物与指南新任务（`tir_non_adherence`，TIR<70%）。双流因果滤波在 IR 上达到 **AUROC = 0.891**（超越 GlucoFM 论文 0.812），标准 Transformer 在 HbA1c 回归达到 **$R^2 = 0.566$**。
+  - 产物：`runs/gpu_comprehensive_benchmark_results.csv`、`runs/gpu_forecasting_comparison.csv`、`reports/figures/fig6_*.png` ~ `fig8_*.png`、完整报告 `reports/M5_gpu_full_benchmark_report.md`。
 
 ## 6. 风险与预案
 

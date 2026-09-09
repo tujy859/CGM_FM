@@ -32,6 +32,7 @@
 | 2026-09-01 | [M4_track2_generative.md](M4_track2_generative.md) | M4 轨道 2 生成式探针（插补/预测） | ✅ |
 | 2026-09-01 | [M4_track1_glucotype_extension.md](M4_track1_glucotype_extension.md) | M4 轨道 1 扩展 hall/glucotype 格 | ✅ |
 | 2026-09-09 | [M5_from_scratch_vs_mantis_report.md](M5_from_scratch_vs_mantis_report.md) | M5 从头预训练 vs Mantis微调与TimesFM对比评测 | ✅ |
+| 2026-09-10 | [M5_gpu_full_benchmark_report.md](M5_gpu_full_benchmark_report.md) | M5 GPU全量多架构基模、Mantis增训、LSTM预测与生物标志物全景报告 | ✅ |
 
 ## 原始报告（当时产出原样归档，与上表整理版并存）
 

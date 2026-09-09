@@ -1,0 +1,13 @@
+model,horizon,steps,rmse,mae
+TimesFM-2.5-200M (Zero-Shot),30m,6,13.94,12.24
+GRU Forecaster (GPU),30m,6,14.89,13.11
+LSTM Forecaster (GPU),30m,6,14.97,13.1
+Persistence Baseline,30m,6,16.22,14.33
+GRU Forecaster (GPU),60m,12,20.15,17.55
+LSTM Forecaster (GPU),60m,12,20.19,17.53
+TimesFM-2.5-200M (Zero-Shot),60m,12,20.19,16.45
+Persistence Baseline,60m,12,21.77,19.05
+GRU Forecaster (GPU),120m (2h),24,24.79,21.35
+LSTM Forecaster (GPU),120m (2h),24,24.85,21.38
+TimesFM-2.5-200M (Zero-Shot),120m (2h),24,26.04,21.06
+Persistence Baseline,120m (2h),24,27.64,23.75

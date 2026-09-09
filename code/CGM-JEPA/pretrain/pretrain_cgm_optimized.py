@@ -132,6 +132,8 @@ def main():
     parser.add_argument("--lambda-recon", type=float, default=0.25)
     parser.add_argument("--mask-min", type=float, default=0.5)
     parser.add_argument("--mask-max", type=float, default=0.6)
+    parser.add_argument("--arch", default="dual", choices=["dual", "plain", "cnn"])
+    parser.add_argument("--stride", type=int, default=72)
     parser.add_argument("--seed", type=int, default=43)
     args = parser.parse_args()
 
@@ -140,12 +142,12 @@ def main():
     device = load_device()
 
     dataset = OptimizedCGMDataset(
-        args.data_dir, args.splits, window=288, stride=144, patch_size=12,
+        args.data_dir, args.splits, window=288, stride=args.stride, patch_size=12,
         augment=True, seed=args.seed
     )
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
 
-    encoder, cfg = build_factor_encoder("mcr", "dual", dim_in=12, use_circadian=True)
+    encoder, cfg = build_factor_encoder("mcr", args.arch, dim_in=12, use_circadian=True)
     predictor = Predictor(
         encoder_embed_dim=cfg["encoder_embed_dim"],
         predictor_embed_dim=cfg["predictor_embed"],
@@ -204,8 +206,8 @@ def main():
 
     run_cfg = {
         **cfg,
-        "objective": "mcr_optimized",
-        "arch": "dual",
+        "objective": "mcr",
+        "arch": args.arch,
         "dim_in": 12,
         "seed": args.seed,
         "epochs": args.epochs,
@@ -274,10 +276,16 @@ def main():
                 loss_td = torch.zeros((), device=device)
 
             # 3. State reconstruction loss (preserves glycemic DC baseline)
-            recon_state = modules["recon_decoder"](pred)
-            tgt_state_patches = encoder.decompose(patches)[:, 0]  # (B, N, L)
-            tgt_state_masked = torch.gather(tgt_state_patches, 1, masks.unsqueeze(-1).expand(-1, -1, L))
-            loss_recon = F.smooth_l1_loss(recon_state, tgt_state_masked)
+            if args.lambda_recon > 0:
+                recon_state = modules["recon_decoder"](pred)
+                if hasattr(encoder, "state_filter") and encoder.state_filter is not None:
+                    tgt_state_patches = encoder.decompose(patches)[:, 0]  # (B, N, L)
+                else:
+                    tgt_state_patches = patches
+                tgt_state_masked = torch.gather(tgt_state_patches, 1, masks.unsqueeze(-1).expand(-1, -1, L))
+                loss_recon = F.smooth_l1_loss(recon_state, tgt_state_masked)
+            else:
+                loss_recon = torch.zeros((), device=device)
 
             total_loss = loss_mcr + args.lambda_td * loss_td + args.lambda_recon * loss_recon
 

@@ -77,11 +77,12 @@ def main():
     parser.add_argument("--data-dir", default="data/unified")
     parser.add_argument("--splits", default="data/splits.json")
     parser.add_argument("--out-dir", default="runs/mantis_cgm_finetuned")
-    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--epochs", type=int, default=15)
     parser.add_argument("--batch-size", type=int, default=64)
-    parser.add_argument("--lr", type=float, default=5e-5)
+    parser.add_argument("--lr", type=float, default=3e-5)
+    parser.add_argument("--stride", type=int, default=72)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
-    parser.add_argument("--max-samples", type=int, default=2500, help="Subset size for training budget")
+    parser.add_argument("--max-samples", type=int, default=0, help="0 to use all windows")
     args = parser.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)
@@ -89,13 +90,15 @@ def main():
 
     # 1. Load data
     windows = load_cgm_pretrain_windows(
-        args.data_dir, args.splits, window=288, stride=144
+        args.data_dir, args.splits, window=288, stride=args.stride
     )
-    if args.max_samples and len(windows) > args.max_samples:
+    if args.max_samples > 0 and len(windows) > args.max_samples:
         np.random.seed(42)
         idx = np.random.choice(len(windows), size=args.max_samples, replace=False)
         windows = windows[idx]
-        print(f"[mantis_pretrain] Subsampled to {len(windows)} windows for CPU training")
+        print(f"[mantis_pretrain] Subsampled to {len(windows)} windows")
+    else:
+        print(f"[mantis_pretrain] Using all {len(windows)} windows on {device}")
 
     dataset = TensorDataset(torch.tensor(windows))
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
