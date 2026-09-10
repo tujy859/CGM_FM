@@ -16,9 +16,9 @@
 
 1. **极端的数据不平衡（98% 稳态静息 vs 2% 剧烈动力学）**：
    在全量清洗后的 CGM 序列（以 `data/unified/cgmacros_dexcom.csv` 124,493 个 5 分钟时间步实测）中：
-   - 稳态静息点（变化率 $|\text{ROC}| < 0.8$ mg/dL/min）占比高达 **98.0%**；
-   - 急剧上升点（$\text{ROC}_{15m} \ge +0.8$ mg/dL/min，即 15 分钟上升 $\ge 12$ mg/dL）仅占 **1.0%**；
-   - 急剧下降点（$\text{ROC}_{15m} \le -0.8$ mg/dL/min，即 15 分钟下降 $\ge 12$ mg/dL）仅占 **1.0%**。
+   - 稳态静息点（变化率 `|ROC| < 0.8` mg/dL/min）占比高达 **98.0%**；
+   - 急剧上升点（`ROC_15m ≥ +0.8` mg/dL/min，即 15 分钟上升 ≥ 12 mg/dL）仅占 **1.0%**；
+   - 急剧下降点（`ROC_15m ≤ -0.8` mg/dL/min，即 15 分钟下降 ≥ 12 mg/dL）仅占 **1.0%**。
 2. **MSE 损失函数的数学条件期望坍缩**：
    在无外源胰岛素/进餐标注的盲输入下，模型最小化全局均方误差 $\mathbb{E}[(y - \hat{y})^2]$。其理论最优预测即为条件期望 $\mathbb{E}[y_{t+k} \mid x_{1:t}]$。由于 98% 的时间段患者并未进餐、处于极缓慢的基线漂移，模型一旦激进预测波峰但患者并未进餐，就会遭受巨大的平方误差惩罚。因此，**全局 MSE 优化后的数学纳什均衡必然是“输出一条几乎水平的保守平线（即 Persistence 惯性漂移）”**。
 3. **临床真实需求的解耦**：
@@ -33,24 +33,36 @@
 
 ### 2.1 生理触发器判据
 使用抗噪的 15 分钟一阶导数：
-$$\text{ROC}_{15m}(t) = \frac{G(t) - G(t-3)}{15 \text{ min}}$$
-- **上升触发 (Rising Trigger)**：$\text{ROC}_{15m} \ge +0.8$ mg/dL/min（15分钟上升 $\ge 12$ mg/dL），捕获进餐吸收与黎明现象启动阶段；
-- **下降触发 (Falling Trigger)**：$\text{ROC}_{15m} \le -0.8$ mg/dL/min，或 $G(t) \le 110$ mg/dL 且 $\text{ROC}_{15m} \le -0.5$ mg/dL/min，捕获胰岛素过量下冲或运动后骤降。
+
+```math
+\text{ROC}_{15m}(t) = \frac{G(t) - G(t-3)}{15 \text{ min}}
+```
+
+- **上升触发 (Rising Trigger)**：`ROC_15m ≥ +0.8` mg/dL/min（15 分钟上升 ≥ 12 mg/dL），捕获进餐吸收与黎明现象启动阶段；
+- **下降触发 (Falling Trigger)**：`ROC_15m ≤ -0.8` mg/dL/min，或 `G(t) ≤ 110` mg/dL 且 `ROC_15m ≤ -0.5` mg/dL/min，捕获胰岛素过量下冲或运动后骤降。
 
 ### 2.2 网络架构 (`TriggeredDynamicsForecaster`)
 - **历史序列编码**：输入过去 60 分钟（12 步），经由 1D 因果膨胀卷积（Dilations 1, 2）提取多尺度局部瞬态波形，送入双层因果 GRU 聚合时序隐状态（64 维）。
-- **显式动力学生理特征融合**：输入当前绝对血糖 $G(t)$、$\text{ROC}_{5m}$、$\text{ROC}_{15m}$、$\text{ROC}_{30m}$、瞬时加速度 $a(t)$、以及昼夜节律相位 $(\sin, \cos)$，经 MLP 编码为 32 维特征，与时序隐状态拼接融合（96 维）。
+- **显式动力学生理特征融合**：输入当前绝对血糖 `G(t)`、`ROC_5m`、`ROC_15m`、`ROC_30m`、瞬时加速度 `a(t)`、以及昼夜节律相位 `(sin, cos)`，经 MLP 编码为 32 维特征，与时序隐状态拼接融合（96 维）。
 - **多任务解耦头**：
-  1. **未来相对位移轨迹头 (Trajectory Delta Head)**：输出 $\Delta \hat{y}_{1:24}$，最终预测为 $G(t) + \Delta \hat{y}$。天然保证 $t=0$ 时与真实观测无缝衔接，消除边界跳跃；
-  2. **极值与到达时间头 (Extrema Head)**：直接预测极值增量（$\Delta \hat{G}_{\text{peak}}$ 或 $\Delta \hat{G}_{\text{nadir}}$）与标准化事件时间；
+  1. **未来相对位移轨迹头 (Trajectory Delta Head)**：输出 `Δy_pred`（未来 24 步），最终预测为 `G(t) + Δy_pred`。天然保证 t=0 时与真实观测无缝衔接，消除边界跳跃；
+  2. **极值与到达时间头 (Extrema Head)**：直接预测极值增量（`ΔG_peak` 或 `ΔG_nadir`）与标准化事件时间；
   3. **临床预警分类头 (Risk Alert Head)**：Sigmoid 输出未来击穿 Level 1（180/70 mg/dL）与 Level 2（250/54 mg/dL）的后验概率。
 
 ### 2.3 联合动力学校正损失函数
 为了彻底杜绝输出水平线，显式引入一阶导数斜率惩罚与极值监督：
-$$\mathcal{L} = \mathcal{L}_{\text{MSE}}(\Delta \hat{y}, \Delta y) + 2.0 \cdot \mathcal{L}_{\text{Slope}}\left(\frac{d\hat{y}}{dt}, \frac{dy}{dt}\right) + 0.5 \cdot \mathcal{L}_{\text{Huber}}(\Delta \hat{G}, \Delta G) + 0.5 \cdot \mathcal{L}_{\text{BCE}}(\text{Alert})$$
+
+```math
+\mathcal{L} = \mathcal{L}_{\text{MSE}}(\Delta \hat{y}, \Delta y) + 2.0 \cdot \mathcal{L}_{\text{Slope}}\left(\frac{d\hat{y}}{dt}, \frac{dy}{dt}\right) + 0.5 \cdot \mathcal{L}_{\text{Huber}}(\Delta \hat{G}, \Delta G) + 0.5 \cdot \mathcal{L}_{\text{BCE}}(\text{Alert})
+```
+
 其中斜率损失项：
-$$\mathcal{L}_{\text{Slope}} = \frac{1}{K-1} \sum_{k=1}^{K-1} \left( (\Delta \hat{y}_{k+1} - \Delta \hat{y}_k) - (\Delta y_{k+1} - \Delta y_k) \right)^2$$
-**如果模型预测平线（$\Delta \hat{y} \approx 0$），将遭受极大的斜率惩罚，迫使模型学习真实的餐后抬升与胰岛素骤降曲率！**
+
+```math
+\mathcal{L}_{\text{Slope}} = \frac{1}{K-1} \sum_{k=1}^{K-1} \left( (\Delta \hat{y}_{k+1} - \Delta \hat{y}_k) - (\Delta y_{k+1} - \Delta y_k) \right)^2
+```
+
+**如果模型预测平线（`Δy_pred ≈ 0`），将遭受极大的斜率惩罚，迫使模型学习真实的餐后抬升与胰岛素骤降曲率！**
 
 ---
 
@@ -88,20 +100,20 @@ $$\mathcal{L}_{\text{Slope}} = \frac{1}{K-1} \sum_{k=1}^{K-1} \left( (\Delta \ha
 
 ### 4.1 典型病例轨迹解析 (Panels A–D)
 - **Panel (A) 典型餐后暴涨与高血糖警戒突破 (Postprandial Surge: Hyperglycemia Peak Breach)**：
-  - *输入情境*：受试者在过去 60 分钟内进食，血糖从 105 mg/dL 快速拉升至触发时刻 $t=0$ 的 178 mg/dL（$\text{ROC} = +3.07$ mg/dL/min）；
+  - *输入情境*：受试者在过去 60 分钟内进食，血糖从 105 mg/dL 快速拉升至触发时刻 t=0 的 178 mg/dL（`ROC = +3.07 mg/dL/min`）；
   - *模型表现*：
     - **Persistence (灰色虚线)**：输出一条恒定的 178 mg/dL 水平平线，对后续吸收完全“视而不见”，无法预报高血糖风险；
     - **LSTM (蓝点划线)**：不仅未能预测上升，反而钝化甚至微向下掉，在第 60 分钟跌至 165 mg/dL，与真实情况完全南辕北辙；
     - **Linear Momentum (绿虚线)**：无阻尼地发散外推，在 120 分钟飙升至 345 mg/dL，出现严重的超调与虚假报警；
     - **Triggered Dynamics (橙色实线+方形标记，本方案)**：准确把握了人体碳水化合物吸收的生理阻尼动力学，在未来 30~50 分钟内预测出一条饱满的圆弧上升曲线，预测峰值达 198 mg/dL，精准捕获了突破 180 mg/dL 高血糖红线的临床事实，并紧密跟踪了 200~215 mg/dL 的真实平台期！
 - **Panel (B) 中度进餐吸收与生理达峰平稳回落 (Moderate Absorption Curve)**：
-  - *输入情境*：在 $t=0$ 时刻触发速率为 $+0.93$ mg/dL/min（血糖 115 mg/dL）；
+  - *输入情境*：在 t=0 时刻触发速率为 `+0.93 mg/dL/min`（血糖 115 mg/dL）；
   - *模型表现*：Triggered Dynamics 模型精确预测出了“先升后降”的完整生理吸收与自身胰岛素对冲过程：在第 30~45 分钟平滑攀升至 ~128 mg/dL 达峰，随后在 90~120 分钟平稳回落至 115 mg/dL 基线附近，相比于线性动量的一路狂飙，展现了极强的生理合理性。
 - **Panel (C) 危急低血糖快速下冲预警 (Critical Hypoglycemia Alert)**：
-  - *输入情境*：受试者血糖在峰值后急剧跳水，$t=0$ 时刻跌至 118 mg/dL（$\text{ROC} = -2.07$ mg/dL/min）；
+  - *输入情境*：受试者血糖在峰值后急剧跳水，t=0 时刻跌至 118 mg/dL（`ROC = -2.07 mg/dL/min`）；
   - *模型表现*：真实血糖在未来 15 分钟内直接坠入 60 mg/dL 危险低血糖区。Persistence 依然死守在 118 mg/dL 高位，延误了宝贵的急救黄金窗口；而 Triggered Dynamics 迅速响应下冲惯性，提前预警低血糖风险，为患者及时补充快糖争取了宝贵时间。
 - **Panel (D) 高位剧烈陡降与触底平台 (Steep Glycemic Plunge)**：
-  - *输入情境*：受试者血糖从近 300 mg/dL 的极高水平因大剂量胰岛素或运动开始陡降，$t=0$ 时刻为 272 mg/dL（$\text{ROC} = -1.87$ mg/dL/min）；
+  - *输入情境*：受试者血糖从近 300 mg/dL 的极高水平因大剂量胰岛素或运动开始陡降，t=0 时刻为 272 mg/dL（`ROC = -1.87 mg/dL/min`）；
   - *模型表现*：Triggered Dynamics 展现出惊人的下行跟踪能力，沿途紧咬真实血糖轨迹向 220 mg/dL 回落；而 Persistence 停留在 272 mg/dL，LSTM 几乎不下降。
 
 ### 4.2 全量统计误差柱状图解析 (Panels E–F)
