@@ -252,6 +252,12 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
   - 预测任务引入专用监督小模型（LSTM & GRU），在 2 小时（120m）预测上以 RMSE 24.79 mg/dL 全面战胜 TimesFM-2.5 (26.04) 与 Persistence (27.64)！
   - 临床任务纳入 11 项标准 CGM 数字生物标志物与指南新任务（`tir_non_adherence`，TIR<70%）。双流因果滤波在 IR 上达到 **AUROC = 0.891**（超越 GlucoFM 论文 0.812），标准 Transformer 在 HbA1c 回归达到 **$R^2 = 0.566$**。
   - 产物：`runs/gpu_comprehensive_benchmark_results.csv`、`runs/gpu_forecasting_comparison.csv`、`reports/figures/fig6_*.png` ~ `fig8_*.png`、完整报告 `reports/M5_gpu_full_benchmark_report.md`。
+- **触发式动力学生糖/降糖预测重大攻关（2026-09-10）**：
+  - 针对全局 MSE 点预测退化为“水平平线（Persistence 陷阱）”的痛点，创新提出**基于生理速率触发（ROC Triggered）的状态动力学双分支模型**（`TriggeredDynamicsForecaster`），引入一阶导数斜率损失与极值 Huber 损失。
+  - 在 CGMacros 独立测试集（322 个餐后上升事件、363 个急跌事件）上：
+    - 上升达峰期：峰值绝对误差由 Persistence 的 32.34 mg/dL 骤降至 **22.12 mg/dL（误差下降 31.6%）**；30m/60m/120m RMSE 均超越 Persistence 与 LSTM。高血糖（>180 mg/dL）预警 **AUROC = 0.829**。
+    - 下降急跌期：谷值绝对误差由 Persistence 的 29.75 mg/dL 骤降至 **17.48 mg/dL（误差下降 41.3%）**；60m RMSE 提升 **14.3%**（19.43 -> 16.65 mg/dL）。低血糖（<70 mg/dL）预警 **AUROC = 0.706**。
+  - 产物：`scripts/train_eval_triggered_forecasters.py`、`scripts/plot_triggered_trajectories.py`、`runs/triggered_forecasters/*_best.pt`、`runs/triggered_forecasting_comparison.csv`、`reports/figures/fig9_triggered_forecasting_cases.png`、完整报告 `reports/M5_triggered_forecasting_report.md`。
 
 ## 6. 风险与预案
 
