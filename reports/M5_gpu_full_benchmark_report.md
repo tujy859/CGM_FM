@@ -34,8 +34,11 @@
 > [!NOTE]
 > **关于预测误差相对变化正负号的说明**：
 > RMSE（均方根误差）与 MAE（平均绝对误差）是“越小越好（Lower is Better）”的指标。
-> 数学公式为：
-> $$\Delta \text{Error} = \frac{\text{RMSE}_{\text{model}} - \text{RMSE}_{\text{persistence}}}{\text{RMSE}_{\text{persistence}}} \times 100\%$$
+> 相对变化公式定义为：`ΔError = ((RMSE_model - RMSE_persistence) / RMSE_persistence) × 100%`。
+> 
+> ```math
+> \Delta \text{Error} = \frac{\text{RMSE}_{\text{model}} - \text{RMSE}_{\text{persistence}}}{\text{RMSE}_{\text{persistence}}} \times 100\%
+> ```
 > 计算结果为负数（例如 $-10.3\%$）代表**误差相比 Persistence 降低了 10.3%**，即**预测精度提升了 10.3%**！
 > 为使表达更加直观清晰，本报告在表格中统一表述为 **“误差相对降幅（+10.3% 代表精度提升）”**。
 
