@@ -258,6 +258,14 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
     - 上升达峰期：峰值绝对误差由 Persistence 的 32.34 mg/dL 骤降至 **22.12 mg/dL（误差下降 31.6%）**；30m/60m/120m RMSE 均超越 Persistence 与 LSTM。高血糖（>180 mg/dL）预警 **AUROC = 0.829**。
     - 下降急跌期：谷值绝对误差由 Persistence 的 29.75 mg/dL 骤降至 **17.48 mg/dL（误差下降 41.3%）**；60m RMSE 提升 **14.3%**（19.43 -> 16.65 mg/dL）。低血糖（<70 mg/dL）预警 **AUROC = 0.706**。
   - 产物：`scripts/train_eval_triggered_forecasters.py`、`scripts/plot_triggered_trajectories.py`、`runs/triggered_forecasters/*_best.pt`、`runs/triggered_forecasting_comparison.csv`、`reports/figures/fig9_triggered_forecasting_cases.png`、完整报告 `reports/M5_triggered_forecasting_report.md`。
+- **Amazon Chronos 零样本预测与概率不确定度评测（2026-09-12）**：
+  - 在 `.venv-timesfm` 独立环境中引入 Amazon 开源的 `chronos-forecasting==2.3.2`，评测了 **Chronos-Bolt-Tiny (9M)** 与 **Chronos-Bolt-Base (200M)**。
+  - 在受试者隔离测试集上：
+    - 30m：Chronos-Bolt-Base 达到 **15.09 mg/dL**（较 Persistence 降低 6.9% 误差），TimesFM 达到 13.94 mg/dL；
+    - 60m：Chronos-Bolt-Base 达到 **20.25 mg/dL**，与 TimesFM (20.19 mg/dL) 高度逼近（仅差 0.06 mg/dL）；
+    - 120m：Chronos-Bolt-Base 达到 **26.02 mg/dL**，微弱超越 TimesFM (26.04 mg/dL)，均稳定超越 Persistence (27.64 mg/dL)；
+    - 概率预测：名义 80% 区间（p10–p90）跨受试者实测覆盖率达 **74.0%–75.3%**，下界 p10 在急剧下降时有效向下穿透 70 mg/dL 警戒线，为闭环人工胰腺（APS）低血糖防御提供了关键安全屏障。
+  - 产物：`scripts/eval_chronos_forecast.py`、`scripts/plot_chronos_comparison.py`、`runs/eval_chronos_forecast.csv`、更新后的 `runs/gpu_forecasting_comparison.csv`、`reports/figures/fig10_chronos_multihorizon_benchmark.png`、`reports/figures/fig11_chronos_probabilistic_trajectories.png`、完整报告 `reports/2026-09-12_chronos_vs_timesfm_forecast_benchmark.md`。
 
 ## 6. 风险与预案
 
