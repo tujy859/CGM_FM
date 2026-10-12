@@ -24,7 +24,7 @@
 - 依赖硬 pin 勿动：CGM-JEPA 的 `transformers==4.33.3`、`huggingface_hub==0.24.0`（momentfm/mantis 锁死）
 - 输出公式用**纯文本**（CLI 不渲染 LaTeX），如 `S_next = S + g(S, E, tau)`
 - 含中文的 .ps1 文件必须 UTF-8 BOM 保存（详见全局 AGENTS.md）
-- **shell 编码事实（已实测）**：本工具运行 pwsh 7.6.5 且 `-NoProfile`（profile 不会加载）；控制台默认 GBK。命令输出需含中文时，必须以 `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8;` 作为**第一条语句**（首次输出前设置才有效）；中文内容的读写一律用 Read/Write/Edit 工具（编码安全）
+- **shell 与 Python 编码事实（已实测，强制执行）**：本工具运行 PowerShell 且 `-NoProfile`（profile 不会加载）；控制台默认 GBK。为彻底杜绝控制台中文乱码，执行包含中文输出的命令时，必须在语句开头声明：`[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $env:PYTHONIOENCODING = "utf-8"; $env:PYTHONUTF8 = "1";`（已在 Windows 用户环境变量中全局持久化）；Python 代码内部读写文件显式指定 `encoding="utf-8"`；中文内容的读写一律用 Read/Write/Edit 工具（编码安全）
 - 大文件下载用 `curl.exe`（断点续传），HF 资产用 `huggingface-cli`
 
 ## 执行规范

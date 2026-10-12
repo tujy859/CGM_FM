@@ -57,6 +57,7 @@
 | 2026-09-10 | [M5_gpu_full_benchmark_report.md](M5_gpu_full_benchmark_report.md) | M5 GPU全量多架构基模、Mantis增训、LSTM预测与生物标志物全景报告 | ✅ |
 | 2026-09-10 | [M5_triggered_forecasting_report.md](M5_triggered_forecasting_report.md) | M5 触发式血糖动力学预测模型报告（攻克平线困境，拟合升糖与降糖曲率） | ✅ |
 | 2026-09-12 | [2026-09-12_chronos_vs_timesfm_forecast_benchmark.md](2026-09-12_chronos_vs_timesfm_forecast_benchmark.md) | Amazon Chronos 零样本血糖预测与 TimesFM/LSTM/GRU 全景基准横评报告 | ✅ |
+| 2026-09-27 | [2026-09-27_postprandial_prediction_report.md](2026-09-27_postprandial_prediction_report.md) | 餐后血糖响应 (PPGR) 轨迹预测基准评测：自研从头基模 vs Mantis 与 Google 对照 | ✅ |
 
 ## 原始报告（当时产出原样归档，与上表整理版并存）
 

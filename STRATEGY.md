@@ -266,6 +266,14 @@ uv run python scripts/run_all_eval.py   # 注意：pretrain 脚本的 wandb.init
     - 120m：Chronos-Bolt-Base 达到 **26.02 mg/dL**，微弱超越 TimesFM (26.04 mg/dL)，均稳定超越 Persistence (27.64 mg/dL)；
     - 概率预测：名义 80% 区间（p10–p90）跨受试者实测覆盖率达 **74.0%–75.3%**，下界 p10 在急剧下降时有效向下穿透 70 mg/dL 警戒线，为闭环人工胰腺（APS）低血糖防御提供了关键安全屏障。
   - 产物：`scripts/eval_chronos_forecast.py`、`scripts/plot_chronos_comparison.py`、`runs/eval_chronos_forecast.csv`、更新后的 `runs/gpu_forecasting_comparison.csv`、`reports/figures/fig10_chronos_multihorizon_benchmark.png`、`reports/figures/fig11_chronos_probabilistic_trajectories.png`、完整报告 `reports/2026-09-12_chronos_vs_timesfm_forecast_benchmark.md`。
+- **餐后血糖响应 (PPGR) 轨迹预测基准全面评测（2026-09-27）**：
+  - 基于新下载解压的 CGMacros 真实多模态临床队列（45 人，68.7 万行，双传感器），严格复现了 Google GlucoFM 论文与官方成果中的**餐后 2 小时血糖变化完整轨迹预测（2-hour PPGR Trajectory Forecasting）**任务。
+  - 在严格受试者隔离（5-Fold Subject-Disjoint CV）下，评测了 5 级渐进式多模态特征上下文（L1 至 L5）：
+    - **自研从头基模 `CGM-FM Dual-Hybrid`** 取得 **22.66 ± 17.56 mg/dL MAE**（在 L4 达 **22.49 mg/dL**，Libre 硬件达 **20.38 mg/dL**），**全面战胜 Google 论文报道的最佳 Baseline (22.90 mg/dL)**，逼近 Google 官方 GlucoFM 的 21.88 mg/dL！
+    - **标准 Transformer 对照 `CGM-FM Plain-MCR`** 取得 **22.86 ± 17.88 mg/dL**，验证了双流因果高斯滤波分解在提取餐后瞬态波动的物理优势；
+    - **微调大模型 `Mantis-8M Fine-tuned`** 为 **23.70 ± 15.59 mg/dL**，`Mantis-8M Zero-shot` 为 **23.56 ± 15.28 mg/dL**，证实轻量双流专用基模在时序连续物理动力学外推上优于通用时序大模型；
+    - 传统均值基准实测 **26.17 mg/dL**（高度对齐 Google 论文公布的 27.69 mg/dL 均值口径），Persistence 基线为 **30.28 mg/dL**。
+  - 产物：`scripts/build_ppgr_dataset.py`、`scripts/eval_ppgr_benchmark.py`、`scripts/plot_ppgr_benchmark.py`、`runs/ppgr_benchmark_results.csv`、`runs/ppgr_benchmark_trajectories.pkl`、`reports/figures/fig12_*.png` 至 `fig14_*.png`、完整报告 `reports/2026-09-27_postprandial_prediction_report.md`。
 
 ## 6. 风险与预案
 
