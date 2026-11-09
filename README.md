@@ -1,5 +1,7 @@
 # CGM 时序基础模型调研与复现工作区
 
+**BIG IDEAs 版本更新（2026-11-09）：**已新增 v1.1.3 独立归档并保留 v1.1.2。007、013、016 的饮食日期已与 CGM 相交，015 仍不相交；合格 CGM＋餐前 HR 窗口由 431 个 / 12 人增至 526 个 / 15 人，营养完整子集为 447 个 / 14 人。源 CGM、心率、现有训练语料与划分未变。详见[版本更新与配对报告](reports/2026-11-09_bigideas_1_1_3_upgrade.md)。
+
 调研时间：2026-08-15。核心对象：**GlucoFM**（Google Research），对比工作：GluFormer、CGMformer、CGM-LSM（CGM-JEPA 为最强同组 baseline）。
 
 ---

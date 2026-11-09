@@ -1,0 +1,8 @@
+{
+  "subject": "003",
+  "rows": 58,
+  "columns": 11,
+  "third_column_parseable_rows": 58,
+  "third_column_equals_date_plus_clock_rows": 58,
+  "scope": "Time identity only; no nutrient/food schema mapping or source edits."
+}

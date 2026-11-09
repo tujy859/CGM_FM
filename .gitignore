@@ -17,3 +17,10 @@ runs/**
 
 # Python bytecode
 __pycache__/
+
+# BIG IDEAs upgrade: event-level audit records stay local
+/reports/audits/bigideas_1_1_3_2026-11-09/pairing/bigideas/meal_events.csv
+/reports/audits/bigideas_1_1_3_2026-11-09/pairing/bigideas/meal_30min_cluster_sensitivity.csv
+/reports/audits/bigideas_1_1_3_2026-11-09/pairing/bigideas/nutrition_event_flags.csv
+/reports/audits/bigideas_1_1_3_2026-11-09/pairing/bigideas/date_time_recovery_sensitivity.json
+/reports/audits/bigideas_1_1_3_2026-11-09/pairing/bigideas/summary.json

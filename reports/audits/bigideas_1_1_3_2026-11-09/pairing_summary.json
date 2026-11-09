@@ -1,0 +1,152 @@
+{
+  "dataset": "bigideas",
+  "date": "2026-11-09",
+  "training_changed": false,
+  "metric_notes": {
+    "grid": "5min occupancy: HR >=1 valid observation; CGM each original observation covers its native cadence. Masks only, no glucose interpolation.",
+    "paired_hours": "Number of common occupied bins /12 summed within source subjects; not continuous duration or clinical completeness.",
+    "meal_event": "One distinct participant/start timestamp after exact record duplicate handling. Food lines sharing a timestamp are one event; 30min clustering is sensitivity, not proven biological meals.",
+    "meal_window": "[-30,+120)min; observed CGM pre and post each >=80% native expected, max gap including boundaries <=20min; >=5/6 complete premeal HR bins.",
+    "hr_range": "30–220 bpm is an audit plausibility screen, not a clinically validated cleaning rule; compare with all positive HR where possible.",
+    "clock": "Matching wall clocks is provisional if timezone/clock calibration is undocumented; no offset chosen by maximizing overlap.",
+    "isolated_field_caveat": "Legacy isolated_* names mean no later logged intake in the next120min only; they do not exclude prior meals, missing logs, or prove biological isolation."
+  },
+  "participants_in_study_source": 16,
+  "participants_with_cgm": 16,
+  "participants_with_hr": 16,
+  "participants_with_paired_cgm_hr": 16,
+  "participants_with_meal_start_events": 16,
+  "participants_with_meals_in_cgm_date_span": 15,
+  "participants_with_nonoverlapping_meal_dates": [
+    "015"
+  ],
+  "participants_with_eligible_meal_windows": 15,
+  "participants_with_isolated_eligible_meal_windows": 15,
+  "participants_with_cgm_and_watch_steps_days": 0,
+  "participants_with_cgm_and_watch_sleep": 0,
+  "totals": {
+    "cgm_source_rows": 36898,
+    "cgm_valid_numeric_rows": 36898,
+    "cgm_invalid_time_or_value_rows": 0,
+    "cgm_conflicting_timestamps_excluded_from_windows": 0,
+    "cgm_exact_time_value_duplicate_rows": 0,
+    "cgm_unique_usable_timestamps": 36898,
+    "hr_rows": 9384435,
+    "hr_plausible_rows": 9384435,
+    "hr_positive_rows": 9384435,
+    "meal_rows": 1422,
+    "meal_exact_duplicates": 1,
+    "meal_invalid_start_rows": 1,
+    "cgm_occupied_5min_bins": 36880,
+    "wearable_occupied_5min_bins": 31144,
+    "paired_5min_bins": 28959,
+    "paired_person_hours": 2413.25,
+    "paired_run_count": 168,
+    "paired_hours_all_positive_hr": 2413.25,
+    "meal_events_within_cgm_date_span": 673,
+    "meal_exact_start_events": 735,
+    "meal_30min_cluster_events": 647,
+    "meal_events_in_paired_5min_bins": 549,
+    "meal_cgm_window_eligible": 657,
+    "meal_cgm_and_premeal_hr_eligible": 526,
+    "meal_isolated_cgm_and_premeal_hr_eligible": 332,
+    "meal_30min_cluster_cgm_and_premeal_hr_eligible": 465,
+    "meal_cgm_and_all_positive_premeal_hr_eligible": 526,
+    "meal_with_source_date_time_recovery_events": 736,
+    "meal_recovered_cgm_and_premeal_hr_eligible": 527,
+    "cgm_days_with_daily_steps": 0,
+    "cgm_sleep_occupied_hours": 0.0,
+    "sleep_invalid_rows": 0,
+    "fraction_cgm_coverage_with_wearable": 0.7852223427331887
+  },
+  "clock_status": "Matched published naive wall-clock datetimes with no fitted shift. Official release states dates were shifted consistently, including food logs. UTC offset, clock calibration and DST conversion are not explicitly documented; absolute synchronization remains provisional.",
+  "source_page": "https://physionet.org/content/big-ideas-glycemic-wearable/1.1.3/",
+  "version": "1.1.3",
+  "device_type": "Empatica E4 wristband HR plus Dexcom G6 CGM; no local steps/sleep result table.",
+  "meal_definition": "Food-item rows grouped by subject and identical verified start timestamp; not all rows are meals. Thirty-minute grouping is separate sensitivity.",
+  "headerless_003": {
+    "subject": "003",
+    "rows": 58,
+    "columns": 11,
+    "third_column_parseable_rows": 58,
+    "third_column_equals_date_plus_clock_rows": 58,
+    "scope": "Time identity only; no nutrient/food schema mapping or source edits."
+  },
+  "hr_timestamp_precision_by_subject": {
+    "001": {
+      "rows": 634188,
+      "rows_with_nonzero_seconds": 0
+    },
+    "002": {
+      "rows": 629672,
+      "rows_with_nonzero_seconds": 619177
+    },
+    "003": {
+      "rows": 417289,
+      "rows_with_nonzero_seconds": 410334
+    },
+    "004": {
+      "rows": 449515,
+      "rows_with_nonzero_seconds": 442025
+    },
+    "005": {
+      "rows": 728477,
+      "rows_with_nonzero_seconds": 716336
+    },
+    "006": {
+      "rows": 499927,
+      "rows_with_nonzero_seconds": 491594
+    },
+    "007": {
+      "rows": 648669,
+      "rows_with_nonzero_seconds": 637857
+    },
+    "008": {
+      "rows": 666038,
+      "rows_with_nonzero_seconds": 654937
+    },
+    "009": {
+      "rows": 634471,
+      "rows_with_nonzero_seconds": 623895
+    },
+    "010": {
+      "rows": 651643,
+      "rows_with_nonzero_seconds": 640784
+    },
+    "011": {
+      "rows": 660929,
+      "rows_with_nonzero_seconds": 649913
+    },
+    "012": {
+      "rows": 597942,
+      "rows_with_nonzero_seconds": 587976
+    },
+    "013": {
+      "rows": 698698,
+      "rows_with_nonzero_seconds": 687051
+    },
+    "014": {
+      "rows": 472364,
+      "rows_with_nonzero_seconds": 464491
+    },
+    "015": {
+      "rows": 436509,
+      "rows_with_nonzero_seconds": 429233
+    },
+    "016": {
+      "rows": 558104,
+      "rows_with_nonzero_seconds": 548802
+    }
+  },
+  "cgm_cadence_minutes": 5,
+  "limitations": [
+    "Some HR files retain only minute precision despite multiple rows per minute; timestamp precision varies by subject, so no universal second-level alignment claim.",
+    "Subject 003 has 11 columns without a header versus the usual 14; only redundant date/time fields confirmed, unknown nutrient columns not mapped.",
+    "Subjects 015 have food dates outside their CGM date ranges; no heuristic shift applied, and those meals cannot currently be paired.",
+    "Primary excludes missing time_begin values; explicit date+time reconstruction shown only as sensitivity.",
+    "Logged intake events may include snacks or drinks and may be incomplete; meal counts are operational.",
+    "Source values retained; CGM duplicate conflict timestamps excluded from target-window eligibility."
+  ],
+  "missing_start_recovery_row_count": 1,
+  "publication_scope": "Aggregate counts and date-range coverage only. Individual recovery records and meal-level tables remain local."
+}

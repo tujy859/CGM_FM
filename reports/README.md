@@ -46,6 +46,7 @@
 
 | 日期 | 报告 | 里程碑/任务 | 状态 |
 |---|---|---|---|
+| 2026-11-09 | [2026-11-09_bigideas_1_1_3_upgrade.md](2026-11-09_bigideas_1_1_3_upgrade.md) | BIG IDEAs 1.1.3 保留旧版升级；三人饮食日期恢复配对，015 仍不相交；训练不变 | 完成 |
 | 2026-08-17 | [M0_env_baseline.md](M0_env_baseline.md) | 环境与官方基线复现 | ✅ |
 | 2026-08-18 | [M1_data_pipeline.md](M1_data_pipeline.md) | 数据管线（14 集 / 2.06M 行） | ✅ |
 | 2026-08-23 | [M2_factor_framework.md](M2_factor_framework.md) | 因子矩阵预训练框架（3×3） | ✅ |

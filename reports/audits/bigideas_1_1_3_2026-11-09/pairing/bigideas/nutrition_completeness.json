@@ -1,0 +1,13 @@
+{
+  "dataset": "bigideas",
+  "definition": "All exact-start food component rows must have nonmissing nonnegative numeric energy, carbohydrate, protein and fat in officially named columns. Zero retained; no imputation. This checks completeness, not nutritional accuracy.",
+  "recorded_exact_start_events": 735,
+  "events_with_known_nutrient_schema": 705,
+  "events_with_complete_four_nutrients": 627,
+  "eligible_cgm_hr_events_with_complete_four_nutrients": 447,
+  "participants_with_complete_nutrients_and_eligible_windows": 14,
+  "unknown_schema_subjects": [
+    "003"
+  ],
+  "training_changed": false
+}
